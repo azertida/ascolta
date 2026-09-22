@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ascolta</title>
+<meta name="description" content="La musique qu’on se recommande">
+<meta name="theme-color" content="#0f0c29">
+<!-- Volontairement : ni manifest, ni service worker, ni apple-mobile-web-app-capable.
+     L'icône d'écran d'accueil s'ouvre ainsi dans Safari et partage les mêmes données
+     que les liens reçus par WhatsApp (leçon de Grazie). -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#0f0c29;overflow-x:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  color:#e2e8f0;font-size:16px;line-height:1.5;
+  min-height:100vh;min-height:100dvh;
+  padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));
+  overflow-wrap:anywhere;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid #c4b5fd;outline-offset:2px}
+
+/* En-tête */
+.head{
+  background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+  padding:calc(20px + env(safe-area-inset-top,0px)) 20px 18px;
+  position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(0,0,0,.4);
+}
+.head h1{font-size:1.6em;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+.head h1 .disc{width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle,#0f0c29 0 3px,#e2e8f0 3.5px 5px,#1e1b4b 5.5px 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.head p{font-size:.9em;opacity:.88}
+.menu-btn{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:16px;
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.15);color:#fff;font-size:20px;font-weight:700;line-height:1}
+
+/* Filtres */
+.filters{padding:14px 20px;background:#1a1a2e;border-bottom:1px solid #2a2a4a}
+.search{width:100%;padding:11px 14px;border:2px solid #2a2a4a;border-radius:10px;background:#16213e;font-size:16px;margin-bottom:10px}
+.search:focus{outline:none;border-color:#8b5cf6}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:6px 13px;border-radius:20px;border:1px solid #2a2a4a;background:#16213e;color:#94a3b8;font-size:.88em}
+.chip.on{background:#8b5cf6;border-color:#8b5cf6;color:#fff}
+
+/* Liste */
+.list{padding:16px 16px 0;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.card{position:relative;background:#16213e;border:1px solid #2a2a4a;border-radius:12px;
+  padding:14px 16px;text-align:left;width:100%;display:block}
+.card:active{background:#1e1e3f}
+.card .title{font-weight:700;font-size:1.05em;padding-right:86px;line-height:1.3}
+.card .artist{color:#c4b5fd;font-weight:600;font-size:.95em}
+.card .meta{color:#94a3b8;font-size:.85em;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.card .note{color:#cbd5e1;font-style:italic;font-size:.9em;margin-top:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{text-align:center;color:#94a3b8;padding:48px 24px;max-width:420px;margin:0 auto}
+.empty strong{display:block;color:#e2e8f0;font-size:1.1em;margin-bottom:6px}
+
+/* L'étiquette de travers, comme sur un boîtier de CD */
+.sticker{position:absolute;top:12px;right:12px;padding:3px 10px 2px;border-radius:3px;
+  font-size:.74em;font-weight:800;letter-spacing:.02em;transform:rotate(5deg);
+  box-shadow:0 1px 0 rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.25);pointer-events:none}
+.sticker.in{background:#fb923c;color:#2a1203}
+.sticker.out{background:#60a5fa;color:#071a36;transform:rotate(-4deg)}
+.sticker.big{font-size:.85em;top:18px;right:18px}
+
+.status-tag{color:#e2e8f0}
+
+/* Bouton + */
+.fab{position:fixed;right:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  width:60px;height:60px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:32px;line-height:1;
+  box-shadow:0 6px 20px rgba(139,92,246,.5);z-index:20}
+
+/* Fenêtres */
+.overlay{position:fixed;inset:0;background:rgba(5,4,20,.75);z-index:50;display:none;
+  align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{position:relative;background:#1a1a2e;border:1px solid #2a2a4a;border-bottom:none;
+  border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow-y:auto;
+  padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.overlay{align-items:center}.sheet{border-radius:18px;border-bottom:1px solid #2a2a4a}}
+.sheet h2{font-size:1.25em;margin-bottom:14px;padding-right:40px}
+.x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
+  border:1px solid #2a2a4a;background:#16213e;color:#94a3b8;font-size:16px}
+.sheet .x + .sticker.big{right:60px}
+
+label.f{display:block;font-size:.88em;color:#cbd5e1;margin:12px 0 5px;font-weight:600}
+.inp{width:100%;padding:11px 13px;border:2px solid #2a2a4a;border-radius:10px;background:#16213e;font-size:16px}
+.inp:focus{outline:none;border-color:#8b5cf6}
+textarea.inp{resize:vertical;min-height:70px}
+.hint{font-size:.8em;color:#94a3b8;margin-top:4px;display:flex;justify-content:space-between;gap:10px}
+.err{color:#fca5a5;font-size:.88em;margin-top:10px;min-height:1.2em}
+
+.btn{display:block;width:100%;padding:13px;border-radius:12px;border:none;font-weight:700;font-size:1em;text-align:center;text-decoration:none}
+.btn.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+.btn.orange{background:#fb923c;color:#2a1203}
+.btn.ghost{background:#16213e;border:1px solid #2a2a4a;color:#e2e8f0}
+.btn.danger{background:transparent;border:1px solid #7f1d1d;color:#fca5a5}
+.btn + .btn,.row + .btn,.btn + .row{margin-top:10px}
+.row{display:flex;gap:10px}
+.row .btn{flex:1;margin-top:0}
+
+/* Fiche */
+.fiche .ttl{font-size:1.4em;font-weight:800;line-height:1.25;padding-right:96px}
+.fiche .art{color:#c4b5fd;font-weight:700;font-size:1.1em;margin-top:2px}
+.fiche .by{color:#94a3b8;font-size:.9em;margin-top:8px}
+.fiche .mot{margin-top:14px;padding:12px 14px;background:#16213e;border-left:3px solid #8b5cf6;border-radius:0 10px 10px 0;font-style:italic;color:#e2e8f0}
+.listen{margin-top:18px}
+.listen .btn{margin-top:10px}
+.pick-title{font-weight:700;margin-bottom:4px}
+.pick-sub{font-size:.85em;color:#94a3b8;margin-bottom:10px}
+.plats{display:flex;flex-wrap:wrap;gap:8px}
+.plat{padding:8px 12px;border-radius:20px;border:1px solid #2a2a4a;background:#16213e;font-size:.9em}
+.plat.on{border-color:#8b5cf6;background:#2e1f5e}
+details.others{margin-top:12px;background:#16213e;border:1px solid #2a2a4a;border-radius:10px;padding:10px 14px}
+details.others summary{cursor:pointer;color:#cbd5e1;font-size:.92em}
+details.others ul{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:2px}
+details.others a{color:#c4b5fd;text-decoration:none;display:block;padding:6px 0}
+.seg{display:flex;gap:6px;margin-top:18px;background:#16213e;border:1px solid #2a2a4a;border-radius:12px;padding:4px}
+.seg button{flex:1;padding:9px 4px;border:none;border-radius:9px;background:transparent;color:#94a3b8;font-size:.88em;font-weight:600}
+.seg button.on{background:#8b5cf6;color:#fff}
+.actions{margin-top:20px}
+.invite{margin-top:18px;padding:14px;border-radius:12px;border:1px dashed #fb923c;background:rgba(251,146,60,.08)}
+.invite strong{display:block;margin-bottom:4px}
+.invite p{font-size:.9em;color:#cbd5e1}
+.invite p + p{margin-top:6px}
+
+/* Réglages */
+.set h3{font-size:.95em;color:#cbd5e1;margin:18px 0 8px}
+.set .about{font-size:.85em;color:#94a3b8;margin-top:20px}
+.lang{display:flex;gap:8px}
+.lang button{flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a4a;background:#16213e;font-weight:700}
+.lang button.on{background:#8b5cf6;border-color:#8b5cf6;color:#fff}
+
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:#8b5cf6;color:#fff;padding:11px 18px;border-radius:24px;font-weight:600;font-size:.92em;
+  z-index:100;box-shadow:0 8px 24px rgba(139,92,246,.45);max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+</style>
+</head>
+<body>
+
+<header class="head">
+  <h1><span class="disc" aria-hidden="true"></span>Ascolta</h1>
+  <p id="tagline"></p>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">⋯</button>
+</header>
+
+<div class="filters">
+  <input class="search" id="search" type="search" autocomplete="off">
+  <div class="chips" id="chips"></div>
+</div>
+
+<main class="list" id="list"></main>
+
+<button class="fab" id="fab">+</button>
+
+<div class="overlay" id="ov"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+'use strict';
+// ============ LANGUE : le français est la base, l'anglais un dictionnaire de différences ============
+const NB = '\u202F';
+const EN = {
+  'La musique qu’on se recommande': 'Music we recommend to each other',
+  'Rechercher': 'Search',
+  'Tout': 'All', 'Reçues': 'Received', 'Envoyées': 'Sent',
+  'À écouter': 'To listen', 'Écoutée': 'Listened', 'Coup de cœur': 'Favourite',
+  'Reçue': 'Received', 'Envoyée': 'Sent',
+  'Aucune reco pour l’instant.': 'No recommendations yet.',
+  'Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.': 'Share a track with the + button, or open a link someone sent you.',
+  'Aucune reco ne correspond.': 'No recommendations match.',
+  'de {name}': 'from {name}',
+  'Partager un morceau': 'Share a track',
+  'Artiste': 'Artist', 'Titre ou album': 'Title or album',
+  'Lien (facultatif)': 'Link (optional)',
+  'Colle le lien de ta plateforme, si tu en as un.': 'Paste the link from your platform, if you have one.',
+  'Ton mot (facultatif)': 'Your note (optional)',
+  ['Pourquoi ce morceau' + NB + '?']: 'Why this track?',
+  'Ton prénom': 'Your first name',
+  'Partager': 'Share', 'Annuler': 'Cancel', 'Fermer': 'Close',
+  'Indique l’artiste et le titre.': 'Enter the artist and the title.',
+  'Indique ton prénom.': 'Enter your first name.',
+  'Ce lien ne ressemble pas à une adresse web.': 'This link doesn’t look like a web address.',
+  'Lien copié': 'Link copied',
+  ['Copie ce lien' + NB + ':']: 'Copy this link:',
+  'Écouter sur {p}': 'Listen on {p}',
+  'Chercher sur {p}': 'Search on {p}',
+  'Ouvrir le lien toutes plateformes': 'Open the all-platforms link',
+  'Ouvrir le lien d’origine ({p})': 'Open the original link ({p})',
+  'Ouvrir le lien d’origine': 'Open the original link',
+  'Autres plateformes': 'Other platforms',
+  ['Tu écoutes sur quelle plateforme' + NB + '?']: 'Which platform do you listen on?',
+  'Tu pourras la changer dans le menu.': 'You can change it in the menu.',
+  'Recommandé par {name}, le {date}': 'Recommended by {name} on {date}',
+  'Envoyée le {date}': 'Sent on {date}',
+  'Faire suivre': 'Pass it on',
+  'Supprimer': 'Delete',
+  ['Supprimer cette reco' + NB + '?']: 'Delete this recommendation?',
+  'Ajouter à ma liste': 'Add to my list',
+  'Déjà dans ta liste': 'Already in your list',
+  'C’est une reco que tu as envoyée.': 'This is a recommendation you sent.',
+  'Ajoutée à ta liste': 'Added to your list',
+  'Ce lien de reco est abîmé ou incomplet.': 'This recommendation link is damaged or incomplete.',
+  'Garde tes recos': 'Keep your recommendations',
+  'Ajoute Ascolta à ton écran d’accueil pour retrouver cette reco et partager les tiennes.': 'Add Ascolta to your home screen to find this one again and share your own.',
+  ['Touche le bouton Partager de Safari, puis «' + NB + 'Sur l’écran d’accueil' + NB + '».']: 'Tap Safari’s Share button, then “Add to Home Screen”.',
+  ['Ouvre le menu ⋮ du navigateur, puis «' + NB + 'Ajouter à l’écran d’accueil' + NB + '».']: 'Open the browser menu ⋮, then “Add to Home screen”.',
+  'Réglages': 'Settings', 'Langue': 'Language', 'Ma plateforme': 'My platform', 'Aucune': 'None',
+  'Mon prénom': 'My first name', 'Sauvegarde': 'Backup',
+  'Exporter mes recos': 'Export my recommendations',
+  'Importer une sauvegarde': 'Import a backup',
+  'Tout effacer': 'Erase everything',
+  ['Effacer toutes tes recos' + NB + '? Pense à exporter d’abord.']: 'Erase all your recommendations? Export them first.',
+  '{n} recos importées': '{n} recommendations imported',
+  'Fichier illisible': 'Unreadable file',
+  ['Aucun serveur' + NB + ': tes recos restent sur cet appareil et dans les liens que tu envoies.']: 'No server: your recommendations stay on this device and in the links you send.',
+  ['«' + NB + '{n}' + NB + '»']: '“{n}”',
+  ['Écoute sur ta plateforme' + NB + ':']: 'Listen on your platform:',
+};
+let lang = load('ascolta.lang', null) || ((navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en');
+function t(fr, vars) {
+  let s = (lang === 'en' && EN[fr] !== undefined) ? EN[fr] : fr;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
+
+// ============ STOCKAGE (clés préfixées : toutes les applis partagent azertida.github.io) ============
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('⚠️ ' + e.message); } }
+let recos = load('ascolta.recos', []);
+if (!Array.isArray(recos)) recos = [];
+let myPlatform = load('ascolta.platform', null);
+let myName = load('ascolta.name', '');
+function persist() { save('ascolta.recos', recos); }
+
+// ============ PLATEFORMES : lien direct si c'est celle de l'auteur, sinon recherche ============
+const PLATFORMS = [
+  { id: 'spotify', name: 'Spotify', hosts: ['open.spotify.com', 'spotify.link', 'spotify.com'], s: q => 'https://open.spotify.com/search/' + q },
+  { id: 'apple', name: 'Apple Music', hosts: ['music.apple.com', 'itunes.apple.com'], s: q => 'https://music.apple.com/search?term=' + q },
+  { id: 'deezer', name: 'Deezer', hosts: ['deezer.com', 'deezer.page.link', 'dzr.page.link'], s: q => 'https://www.deezer.com/search/' + q },
+  { id: 'qobuz', name: 'Qobuz', hosts: ['qobuz.com'], s: q => 'https://www.qobuz.com/' + (lang === 'en' ? 'gb-en' : 'be-fr') + '/search?q=' + q },
+  { id: 'ytmusic', name: 'YouTube Music', hosts: ['music.youtube.com'], s: q => 'https://music.youtube.com/search?q=' + q },
+  { id: 'youtube', name: 'YouTube', hosts: ['youtube.com', 'youtu.be'], s: q => 'https://www.youtube.com/results?search_query=' + q },
+  { id: 'tidal', name: 'Tidal', hosts: ['tidal.com'], s: q => 'https://tidal.com/search?q=' + q },
+  { id: 'amazon', name: 'Amazon Music', hosts: ['music.amazon.com', 'music.amazon.fr', 'music.amazon.de', 'music.amazon.co.uk', 'amazon.com', 'amazon.fr'], s: q => 'https://music.amazon.com/search/' + q },
+  { id: 'soundcloud', name: 'SoundCloud', hosts: ['soundcloud.com'], s: q => 'https://soundcloud.com/search?q=' + q },
+  { id: 'bandcamp', name: 'Bandcamp', hosts: ['bandcamp.com'], s: q => 'https://bandcamp.com/search?q=' + q },
+];
+const GENERIC_HOSTS = ['song.link', 'album.link', 'odesli.co', 'lnk.to', 'linktr.ee'];
+function hostMatch(host, list) { return list.some(h => host === h || host.endsWith('.' + h)); }
+function detect(url) {
+  if (!url) return null;
+  let host; try { host = new URL(url).hostname.toLowerCase(); } catch (e) { return null; }
+  if (hostMatch(host, GENERIC_HOSTS)) return 'generic';
+  const p = PLATFORMS.find(p => hostMatch(host, p.hosts));
+  return p ? p.id : 'other';
+}
+function plat(id) { return PLATFORMS.find(p => p.id === id); }
+function linkFor(r, pid) {
+  if (r.url && detect(r.url) === pid) return { href: r.url, direct: true };
+  return { href: plat(pid).s(encodeURIComponent(r.artist + ' ' + r.title)), direct: false };
+}
+function safeUrl(u) {
+  if (!u) return '';
+  try { const x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : ''; } catch (e) { return ''; }
+}
+
+// ============ LIEN AUTOPORTEUR : JSON compressé (deflate-raw) dans le fragment d'adresse ============
+function b64u(bytes) { let s = ''; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64u(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; const bin = atob(str); return Uint8Array.from(bin, c => c.charCodeAt(0)); }
+async function pipe(bytes, Stream) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new Stream('deflate-raw'))).arrayBuffer()); }
+async function encodeReco(obj) {
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream !== 'undefined') { try { return 'z' + b64u(await pipe(raw, CompressionStream)); } catch (e) {} }
+  return 'j' + b64u(raw);
+}
+async function decodeReco(code) {
+  const kind = code[0], bytes = unb64u(code.slice(1));
+  const raw = kind === 'z' ? await pipe(bytes, DecompressionStream) : kind === 'j' ? bytes : null;
+  if (!raw) throw new Error('format');
+  return JSON.parse(new TextDecoder().decode(raw));
+}
+// Charge utile : v=version, i=id, a=artiste, t=titre, n=mot, f=prénom, d=date, u=lien
+function toPayload(r) { const o = { v: 1, i: r.id, a: r.artist, t: r.title, f: r.from, d: r.date }; if (r.note) o.n = r.note; if (r.url) o.u = r.url; return o; }
+function fromPayload(o) {
+  const str = (x, max) => typeof x === 'string' ? x.trim().slice(0, max) : '';
+  const r = { id: str(o.i, 40), artist: str(o.a, 120), title: str(o.t, 160), note: str(o.n, NOTE_MAX), from: str(o.f, 40), date: /^\d{4}-\d{2}-\d{2}$/.test(o.d) ? o.d : today(), url: safeUrl(str(o.u, 600)) };
+  if (!r.id || !r.artist || !r.title) throw new Error('champs');
+  return r;
+}
+const NOTE_MAX = 120;
+
+// ============ OUTILS ============
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fmtDate(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number); const dt = new Date(y, m - 1, d);
+  const o = { day: 'numeric', month: 'long' }; if (y !== new Date().getFullYear()) o.year = 'numeric';
+  return dt.toLocaleDateString(lang === 'en' ? 'en-GB' : 'fr-BE', o);
+}
+function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 2600); }
+const $ = id => document.getElementById(id);
+const STATUSES = [['todo', 'À écouter'], ['done', 'Écoutée'], ['love', 'Coup de cœur']];
+const STATUS_ICON = { todo: '⏳', done: '✓', love: '♥' };
+
+// ============ LISTE ============
+let filter = 'all';
+const FILTERS = [['all', 'Tout'], ['in', 'Reçues'], ['out', 'Envoyées'], ['todo', 'À écouter'], ['love', 'Coup de cœur']];
+function renderChrome() {
+  document.documentElement.lang = lang;
+  $('tagline').textContent = t('La musique qu’on se recommande');
+  $('search').placeholder = '🔍 ' + t('Rechercher');
+  $('fab').setAttribute('aria-label', t('Partager un morceau'));
+  $('chips').innerHTML = FILTERS.map(([k, l]) => `<button class="chip${filter === k ? ' on' : ''}" data-f="${k}">${esc(t(l))}</button>`).join('');
+}
+function sticker(r, big) { return `<span class="sticker ${r.dir}${big ? ' big' : ''}">${esc(t(r.dir === 'in' ? 'Reçue' : 'Envoyée'))}</span>`; }
+function renderList() {
+  const q = $('search').value.trim().toLowerCase();
+  let items = recos.slice().sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+  if (filter === 'in' || filter === 'out') items = items.filter(r => r.dir === filter);
+  if (filter === 'todo' || filter === 'love') items = items.filter(r => r.dir === 'in' && r.status === filter);
+  if (q) items = items.filter(r => [r.artist, r.title, r.note, r.from].join(' ').toLowerCase().includes(q));
+  const list = $('list');
+  if (!recos.length) { list.innerHTML = `<div class="empty"><strong>${esc(t('Aucune reco pour l’instant.'))}</strong>${esc(t('Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.'))}</div>`; return; }
+  if (!items.length) { list.innerHTML = `<div class="empty">${esc(t('Aucune reco ne correspond.'))}</div>`; return; }
+  list.innerHTML = items.map(r => {
+    const meta = [];
+    if (r.dir === 'in') meta.push(esc(t('de {name}', { name: r.from })));
+    meta.push(esc(fmtDate(r.date)));
+    if (r.dir === 'in') { const st = STATUSES.find(s => s[0] === r.status) || STATUSES[0]; meta.push(`<span class="status-tag">${STATUS_ICON[st[0]]} ${esc(t(st[1]))}</span>`); }
+    return `<button class="card" data-id="${esc(r.id)}">${sticker(r)}
+      <div class="title">${esc(r.title)}</div><div class="artist">${esc(r.artist)}</div>
+      <div class="meta">${meta.map(m => `<span>${m}</span>`).join('')}</div>
+      ${r.note ? `<div class="note">${esc(t('«' + NB + '{n}' + NB + '»', { n: r.note }))}</div>` : ''}</button>`;
+  }).join('');
+}
+function renderAll() { renderChrome(); renderList(); }
+
+// ============ FENÊTRES ============
+let sheetState = null;
+function openSheet(html, state) { sheetState = state || null; $('sheet').innerHTML = `<button class="x" data-act="close" aria-label="${esc(t('Fermer'))}">✕</button>` + html; $('ov').classList.add('open'); $('sheet').scrollTop = 0; }
+function closeSheet() { $('ov').classList.remove('open'); sheetState = null; }
+
+// ----- Fiche (reco de la liste, ou reco reçue par lien) -----
+function listenBlock(r) {
+  if (!myPlatform) {
+    return `<div class="listen"><div class="pick-title">${esc(t('Tu écoutes sur quelle plateforme' + NB + '?'))}</div>
+      <div class="pick-sub">${esc(t('Tu pourras la changer dans le menu.'))}</div>
+      <div class="plats">${PLATFORMS.map(p => `<button class="plat" data-act="pick" data-p="${p.id}">${esc(p.name)}</button>`).join('')}</div></div>`;
+  }
+  const main = linkFor(r, myPlatform), P = plat(myPlatform);
+  let html = `<div class="listen"><a class="btn primary" href="${esc(main.href)}" target="_blank" rel="noopener">▶ ${esc(t(main.direct ? 'Écouter sur {p}' : 'Chercher sur {p}', { p: P.name }))}</a>`;
+  const src = detect(r.url);
+  if (r.url && src !== myPlatform) {
+    const label = src === 'generic' ? t('Ouvrir le lien toutes plateformes') : plat(src) ? t('Ouvrir le lien d’origine ({p})', { p: plat(src).name }) : t('Ouvrir le lien d’origine');
+    html += `<a class="btn ghost" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(label)}</a>`;
+  }
+  html += `<details class="others"><summary>${esc(t('Autres plateformes'))}</summary><ul>` +
+    PLATFORMS.filter(p => p.id !== myPlatform).map(p => { const l = linkFor(r, p.id); return `<li><a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(t(l.direct ? 'Écouter sur {p}' : 'Chercher sur {p}', { p: p.name }))}</a></li>`; }).join('') +
+    `</ul></details></div>`;
+  return html;
+}
+function ficheHead(r) {
+  const by = r.dir === 'in' ? t('Recommandé par {name}, le {date}', { name: r.from, date: fmtDate(r.date) }) : t('Envoyée le {date}', { date: fmtDate(r.date) });
+  return `${sticker(r, true)}<div class="fiche"><div class="ttl">${esc(r.title)}</div><div class="art">${esc(r.artist)}</div>
+    <div class="by">${esc(by)}</div>${r.note ? `<div class="mot">${esc(r.note)}</div>` : ''}</div>`;
+}
+function showDetail(id) {
+  const r = recos.find(x => x.id === id); if (!r) return;
+  let html = ficheHead(r) + listenBlock(r);
+  if (r.dir === 'in') html += `<div class="seg" role="group">${STATUSES.map(([k, l]) => `<button class="${r.status === k ? 'on' : ''}" data-act="status" data-s="${k}">${esc(t(l))}</button>`).join('')}</div>`;
+  html += `<div class="actions">${r.dir === 'out'
+    ? `<button class="btn primary" data-act="reshare">${esc(t('Partager'))}</button>`
+    : `<button class="btn primary" data-act="forward">${esc(t('Faire suivre'))}</button>`}
+    <button class="btn danger" data-act="delete">${esc(t('Supprimer'))}</button></div>`;
+  openSheet(html, { kind: 'detail', id });
+}
+function showIncoming(r) {
+  const mine = recos.find(x => x.id === r.id);
+  const shown = Object.assign({ dir: 'in' }, r);
+  let html = ficheHead(shown) + listenBlock(shown) + '<div class="actions">';
+  if (mine && mine.dir === 'out') html += `<button class="btn ghost" disabled>${esc(t('C’est une reco que tu as envoyée.'))}</button>`;
+  else if (mine) html += `<button class="btn ghost" disabled>✓ ${esc(t('Déjà dans ta liste'))}</button>`;
+  else html += `<button class="btn orange" data-act="add">${esc(t('Ajouter à ma liste'))}</button>`;
+  html += '</div>';
+  if (!recos.length && !mine) {
+    const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
+    if (ios || android) html += `<div class="invite"><strong>${esc(t('Garde tes recos'))}</strong><p>${esc(t('Ajoute Ascolta à ton écran d’accueil pour retrouver cette reco et partager les tiennes.'))}</p>
+      <p>${esc(t(ios ? 'Touche le bouton Partager de Safari, puis «' + NB + 'Sur l’écran d’accueil' + NB + '».' : 'Ouvre le menu ⋮ du navigateur, puis «' + NB + 'Ajouter à l’écran d’accueil' + NB + '».'))}</p></div>`;
+  }
+  openSheet(html, { kind: 'incoming', reco: r });
+}
+
+// ----- Composer une reco -----
+function showCompose(prefill) {
+  const p = prefill || {};
+  const html = `<h2>${esc(t('Partager un morceau'))}</h2>
+    <label class="f" for="cArtist">${esc(t('Artiste'))}</label><input class="inp" id="cArtist" maxlength="120" value="${esc(p.artist)}" autocomplete="off">
+    <label class="f" for="cTitle">${esc(t('Titre ou album'))}</label><input class="inp" id="cTitle" maxlength="160" value="${esc(p.title)}" autocomplete="off">
+    <label class="f" for="cUrl">${esc(t('Lien (facultatif)'))}</label><input class="inp" id="cUrl" type="url" inputmode="url" maxlength="600" value="${esc(p.url)}" autocomplete="off">
+    <div class="hint"><span>${esc(t('Colle le lien de ta plateforme, si tu en as un.'))}</span></div>
+    <label class="f" for="cNote">${esc(t('Ton mot (facultatif)'))}</label><textarea class="inp" id="cNote" maxlength="${NOTE_MAX}" placeholder="${esc(t('Pourquoi ce morceau' + NB + '?'))}"></textarea>
+    <div class="hint"><span></span><span id="cCount">0/${NOTE_MAX}</span></div>
+    <label class="f" for="cName">${esc(t('Ton prénom'))}</label><input class="inp" id="cName" maxlength="40" value="${esc(myName)}" autocomplete="given-name">
+    <div class="err" id="cErr"></div>
+    <button class="btn primary" data-act="send">${esc(t('Partager'))}</button>`;
+  openSheet(html, { kind: 'compose' });
+  $('cNote').addEventListener('input', e => $('cCount').textContent = e.target.value.length + '/' + NOTE_MAX);
+}
+async function sendCompose() {
+  const artist = $('cArtist').value.trim(), title = $('cTitle').value.trim(), note = $('cNote').value.trim().slice(0, NOTE_MAX), name = $('cName').value.trim();
+  let url = $('cUrl').value.trim();
+  const err = m => $('cErr').textContent = t(m);
+  if (!artist || !title) return err('Indique l’artiste et le titre.');
+  if (!name) return err('Indique ton prénom.');
+  if (url) {
+    // On extrait l'adresse si l'appli a collé « texte + lien » (Spotify, Deezer le font)
+    const m = url.match(/https?:\/\/\S+/); url = safeUrl(m ? m[0] : url);
+    if (!url) return err('Ce lien ne ressemble pas à une adresse web.');
+  }
+  myName = name; save('ascolta.name', myName);
+  const r = { id: newId(), dir: 'out', artist, title, note, from: name, date: today(), url, savedAt: new Date().toISOString() };
+  recos.push(r); persist();
+  closeSheet(); renderList();
+  await shareReco(r);
+}
+async function shareReco(r) {
+  const link = location.origin + location.pathname + '#r=' + await encodeReco(toPayload(r));
+  const lines = ['🎵 ' + r.artist + ' — ' + r.title];
+  if (r.note) lines.push(t('«' + NB + '{n}' + NB + '»', { n: r.note }));
+  lines.push('', t('Écoute sur ta plateforme' + NB + ':'), link);
+  const text = lines.join('\n');
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast('📋 ' + t('Lien copié')); }
+  catch (e) { prompt(t('Copie ce lien' + NB + ':'), link); }
+}
+
+// ----- Réglages -----
+function showSettings() {
+  const html = `<h2>${esc(t('Réglages'))}</h2><div class="set">
+    <h3>${esc(t('Langue'))}</h3><div class="lang"><button class="${lang === 'fr' ? 'on' : ''}" data-act="lang" data-l="fr">Français</button><button class="${lang === 'en' ? 'on' : ''}" data-act="lang" data-l="en">English</button></div>
+    <h3><label for="sPlat">${esc(t('Ma plateforme'))}</label></h3><select class="inp" id="sPlat"><option value="">${esc(t('Aucune'))}</option>${PLATFORMS.map(p => `<option value="${p.id}"${myPlatform === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+    <h3><label for="sName">${esc(t('Mon prénom'))}</label></h3><input class="inp" id="sName" maxlength="40" value="${esc(myName)}">
+    <h3>${esc(t('Sauvegarde'))}</h3>
+    <button class="btn ghost" data-act="export">${esc(t('Exporter mes recos'))}</button>
+    <button class="btn ghost" data-act="import">${esc(t('Importer une sauvegarde'))}</button>
+    <input type="file" id="sFile" accept="application/json,.json" hidden>
+    <button class="btn danger" data-act="wipe">${esc(t('Tout effacer'))}</button>
+    <p class="about">${esc(t('Aucun serveur' + NB + ': tes recos restent sur cet appareil et dans les liens que tu envoies.'))}</p></div>`;
+  openSheet(html, { kind: 'settings' });
+  $('sPlat').addEventListener('change', e => { myPlatform = e.target.value || null; save('ascolta.platform', myPlatform); });
+  $('sName').addEventListener('change', e => { myName = e.target.value.trim(); save('ascolta.name', myName); });
+  $('sFile').addEventListener('change', importFile);
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify({ app: 'ascolta', v: 1, recos }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ascolta-' + today() + '.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function importFile(e) {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text()); const arr = Array.isArray(data) ? data : data.recos;
+    if (!Array.isArray(arr)) throw 0;
+    let n = 0;
+    for (const x of arr) {
+      if (!x || !x.id || recos.some(r => r.id === x.id)) continue;
+      try {
+        const r = fromPayload({ i: x.id, a: x.artist, t: x.title, n: x.note, f: x.from, d: x.date, u: x.url });
+        r.dir = x.dir === 'out' ? 'out' : 'in'; if (r.dir === 'in') r.status = STATUS_ICON[x.status] ? x.status : 'todo';
+        r.savedAt = typeof x.savedAt === 'string' ? x.savedAt : new Date().toISOString();
+        recos.push(r); n++;
+      } catch (err) {}
+    }
+    persist(); renderList(); toast(t('{n} recos importées', { n }));
+  } catch (err) { toast('⚠️ ' + t('Fichier illisible')); }
+  e.target.value = '';
+}
+
+// ============ ÉVÉNEMENTS ============
+$('chips').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; filter = b.dataset.f; renderAll(); });
+$('search').addEventListener('input', renderList);
+$('list').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) showDetail(c.dataset.id); });
+$('fab').addEventListener('click', () => showCompose());
+$('menuBtn').addEventListener('click', showSettings);
+$('ov').addEventListener('click', e => { if (e.target === $('ov')) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('ov').classList.contains('open')) closeSheet(); });
+$('sheet').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, st = sheetState || {};
+  if (act === 'close') return closeSheet();
+  if (act === 'pick') {
+    myPlatform = b.dataset.p; save('ascolta.platform', myPlatform);
+    if (st.kind === 'detail') showDetail(st.id); else if (st.kind === 'incoming') showIncoming(st.reco);
+    return;
+  }
+  if (act === 'send') return sendCompose();
+  if (act === 'add' && st.kind === 'incoming') {
+    if (!recos.some(r => r.id === st.reco.id)) { recos.push(Object.assign({}, st.reco, { dir: 'in', status: 'todo', savedAt: new Date().toISOString() })); persist(); }
+    closeSheet(); filter = 'all'; renderAll(); toast('✓ ' + t('Ajoutée à ta liste')); return;
+  }
+  const r = recos.find(x => x.id === st.id);
+  if (act === 'status' && r) { r.status = b.dataset.s; persist(); renderList(); showDetail(r.id); return; }
+  if (act === 'reshare' && r) return shareReco(r);
+  if (act === 'forward' && r) return showCompose({ artist: r.artist, title: r.title, url: r.url });
+  if (act === 'delete' && r) { if (confirm(t('Supprimer cette reco' + NB + '?'))) { recos = recos.filter(x => x.id !== r.id); persist(); closeSheet(); renderList(); } return; }
+  if (act === 'lang') { lang = b.dataset.l; save('ascolta.lang', lang); renderAll(); showSettings(); return; }
+  if (act === 'export') return exportData();
+  if (act === 'import') return $('sFile').click();
+  if (act === 'wipe') { if (confirm(t('Effacer toutes tes recos' + NB + '? Pense à exporter d’abord.'))) { recos = []; persist(); closeSheet(); renderList(); } return; }
+});
+
+// ============ OUVERTURE D'UN LIEN REÇU ============
+async function handleHash() {
+  const m = location.hash.match(/^#r=([A-Za-z0-9_-]+)$/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname);
+  try { showIncoming(fromPayload(await decodeReco(m[1]))); }
+  catch (e) { toast('⚠️ ' + t('Ce lien de reco est abîmé ou incomplet.')); }
+}
+window.addEventListener('hashchange', handleHash);
+
+renderAll();
+handleHash();
+</script>
+</body>
+</html>
