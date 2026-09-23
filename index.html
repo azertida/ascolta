@@ -182,8 +182,11 @@ const EN = {
   'Artiste': 'Artist', 'Titre ou album': 'Title or album',
   'Lien (facultatif)': 'Link (optional)',
   'Colle le lien de ta plateforme, si tu en as un.': 'Paste the link from your platform, if you have one.',
-  'Tu peux aussi coller le message de partage de Deezer entier.': 'You can also paste the whole Deezer share message.',
   'Artiste et titre repris du message. Vérifie-les.': 'Artist and title taken from the message. Check them.',
+  'Recherche de l’artiste et du titre chez Deezer…': 'Looking up artist and title on Deezer…',
+  'Deezer n’a pas répondu : indique l’artiste et le titre.': 'Deezer didn’t answer: enter the artist and title.',
+  'Artiste et titre repris de Deezer. Vérifie-les.': 'Artist and title taken from Deezer. Check them.',
+  'Artiste et titre repris du message. Vérifie-les. Le lien court de Deezer n’est pas gardé : ton destinataire passera par la recherche.': 'Artist and title taken from the message. Check them. Deezer’s short link isn’t kept: your recipient will go through search.',
   'Ton mot (facultatif)': 'Your note (optional)',
   ['Pourquoi ce morceau' + NB + '?']: 'Why this track?',
   'Ton prénom': 'Your first name',
@@ -266,13 +269,36 @@ function detect(url) {
   return p ? p.id : 'other';
 }
 function plat(id) { return PLATFORMS.find(p => p.id === id); }
+// Lien court de Deezer : ne s'ouvre pas hors de Deezer, et pas de façon fiable -> ignoré
+function deadLink(u) { try { return new URL(u).hostname.toLowerCase() === 'link.deezer.com'; } catch (e) { return false; } }
+function usableUrl(r) { return r.url && !deadLink(r.url) ? r.url : ''; }
 function linkFor(r, pid) {
-  if (r.url && detect(r.url) === pid) return { href: r.url, direct: true };
+  const u = usableUrl(r);
+  if (u && detect(u) === pid) return { href: u, direct: true };
   return { href: plat(pid).s(encodeURIComponent(r.artist + ' ' + r.title)), direct: false };
 }
 function safeUrl(u) {
   if (!u) return '';
+  const dz = deezerRef(u);
+  if (dz) return 'https://www.deezer.com/' + dz.type + '/' + dz.id;
   try { const x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : ''; } catch (e) { return ''; }
+}
+// Lien Deezer long : https://www.deezer.com/fr/album/1027942262?host=… -> { type: 'album', id: '1027942262' }
+function deezerRef(u) {
+  const m = String(u || '').match(/^https?:\/\/(?:www\.)?deezer\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(album|track)\/(\d+)/i);
+  return m ? { type: m[1].toLowerCase(), id: m[2] } : null;
+}
+// Demande l'artiste et le titre à l'API publique de Deezer (JSONP : Deezer n'autorise pas les appels directs depuis un site)
+function deezerLookup(ref) {
+  return new Promise(resolve => {
+    const cb = 'ascoltaDz' + Date.now() + Math.floor(Math.random() * 1000), sc = document.createElement('script');
+    const done = v => { clearTimeout(timer); delete window[cb]; sc.remove(); resolve(v); };
+    const timer = setTimeout(() => done(null), 8000);
+    window[cb] = d => done(d && !d.error && d.title && d.artist && d.artist.name ? { title: d.title, artist: d.artist.name } : null);
+    sc.onerror = () => done(null);
+    sc.src = 'https://api.deezer.com/' + ref.type + '/' + ref.id + '?output=jsonp&callback=' + cb;
+    document.head.appendChild(sc);
+  });
 }
 
 // ============ LIEN AUTOPORTEUR : JSON compressé (deflate-raw) dans le fragment d'adresse ============
@@ -361,10 +387,10 @@ function listenBlock(r) {
   }
   const main = linkFor(r, myPlatform), P = plat(myPlatform);
   let html = `<div class="listen"><a class="btn primary" href="${esc(main.href)}" target="_blank" rel="noopener">▶ ${esc(t(main.direct ? 'Écouter sur {p}' : 'Chercher sur {p}', { p: P.name }))}</a>`;
-  const src = detect(r.url);
-  if (r.url && src !== myPlatform) {
+  const ou = usableUrl(r), src = detect(ou);
+  if (ou && src !== myPlatform) {
     const label = src === 'generic' ? t('Ouvrir le lien toutes plateformes') : plat(src) ? t('Ouvrir le lien d’origine ({p})', { p: plat(src).name }) : t('Ouvrir le lien d’origine');
-    html += `<a class="btn ghost" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(label)}</a>`;
+    html += `<a class="btn ghost" href="${esc(ou)}" target="_blank" rel="noopener">${esc(label)}</a>`;
   }
   html += `<details class="others"><summary>${esc(t('Autres plateformes'))}</summary><ul>` +
     PLATFORMS.filter(p => p.id !== myPlatform).map(p => { const l = linkFor(r, p.id); return `<li><a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(t(l.direct ? 'Écouter sur {p}' : 'Chercher sur {p}', { p: p.name }))}</a></li>`; }).join('') +
@@ -409,7 +435,7 @@ function showCompose(prefill) {
     <label class="f" for="cArtist">${esc(t('Artiste'))}</label><input class="inp" id="cArtist" maxlength="120" value="${esc(p.artist)}" autocomplete="off">
     <label class="f" for="cTitle">${esc(t('Titre ou album'))}</label><input class="inp" id="cTitle" maxlength="160" value="${esc(p.title)}" autocomplete="off">
     <label class="f" for="cUrl">${esc(t('Lien (facultatif)'))}</label><input class="inp" id="cUrl" type="url" inputmode="url" maxlength="600" value="${esc(p.url)}" autocomplete="off">
-    <div class="hint"><span id="cUrlHint">${esc(t('Colle le lien de ta plateforme, si tu en as un.'))} ${esc(t('Tu peux aussi coller le message de partage de Deezer entier.'))}</span></div>
+    <div class="hint"><span id="cUrlHint">${esc(t('Colle le lien de ta plateforme, si tu en as un.'))}</span></div>
     <label class="f" for="cNote">${esc(t('Ton mot (facultatif)'))}</label><textarea class="inp" id="cNote" maxlength="${NOTE_MAX}" placeholder="${esc(t('Pourquoi ce morceau' + NB + '?'))}"></textarea>
     <div class="hint"><span></span><span id="cCount">0/${NOTE_MAX}</span></div>
     <label class="f" for="cName">${esc(t('Ton prénom'))}</label><input class="inp" id="cName" maxlength="40" value="${esc(myName)}" autocomplete="given-name">
@@ -433,8 +459,29 @@ function parseShare(text) {
   let x = before.match(/^[ÉEé]coute\s+(.+)\s+de\s+(.+?)\s+sur\s+/i) || before.match(/^Listen to\s+(.+)\s+by\s+(.+?)\s+on\s+/i);
   return x ? { title: x[1].trim(), artist: x[2].trim(), url: m[0] } : { url: m[0] };
 }
+let lastDz = '';
+async function fillFromDeezer(ref) {
+  const key = ref.type + ref.id;
+  if (key === lastDz) return;
+  lastDz = key;
+  const hint = $('cUrlHint');
+  hint.textContent = t('Recherche de l’artiste et du titre chez Deezer…');
+  const r = await deezerLookup(ref);
+  if (lastDz !== key || !$('cArtist')) return;
+  if (!r) { hint.textContent = t('Deezer n’a pas répondu : indique l’artiste et le titre.'); lastDz = ''; return; }
+  if (!$('cArtist').value.trim()) $('cArtist').value = r.artist.slice(0, 120);
+  if (!$('cTitle').value.trim()) $('cTitle').value = r.title.slice(0, 160);
+  hint.textContent = t('Artiste et titre repris de Deezer. Vérifie-les.');
+}
 function applyShare(text, fieldId, fromInput) {
   const p = parseShare(text);
+  const dz = p && deezerRef(p.url);
+  if (dz && !p.title) {
+    $('cUrl').value = safeUrl(p.url);
+    if (fieldId !== 'cUrl') { const f = $(fieldId); if (/https?:\/\//.test(f.value)) f.value = ''; }
+    fillFromDeezer(dz);
+    return true;
+  }
   if (!p || !p.title) {
     // Adresse seule collée ailleurs que dans Lien : on la range dans Lien
     if (p && !fromInput && fieldId !== 'cUrl' && /^\s*https?:\/\/\S+\s*$/.test(text)) { $('cUrl').value = p.url; return true; }
@@ -443,8 +490,9 @@ function applyShare(text, fieldId, fromInput) {
   const a = $('cArtist'), ti = $('cTitle');
   if (!a.value.trim() || fieldId === 'cArtist') a.value = p.artist.slice(0, 120);
   if (!ti.value.trim() || fieldId === 'cTitle') ti.value = p.title.slice(0, 160);
-  $('cUrl').value = p.url;
-  $('cUrlHint').textContent = t('Artiste et titre repris du message. Vérifie-les.');
+  const dead = deadLink(p.url);
+  $('cUrl').value = dead ? '' : p.url;
+  $('cUrlHint').textContent = t(dead ? 'Artiste et titre repris du message. Vérifie-les. Le lien court de Deezer n’est pas gardé : ton destinataire passera par la recherche.' : 'Artiste et titre repris du message. Vérifie-les.');
   return true;
 }
 async function sendCompose() {
@@ -457,6 +505,7 @@ async function sendCompose() {
     // On extrait l'adresse si l'appli a collé « texte + lien » (Spotify, Deezer le font)
     const m = url.match(/https?:\/\/\S+/); url = safeUrl(m ? m[0] : url);
     if (!url) return err('Ce lien ne ressemble pas à une adresse web.');
+    if (deadLink(url)) url = '';
   }
   myName = name; save('ascolta.name', myName);
   const r = { id: newId(), dir: 'out', artist, title, note, from: name, date: today(), url, savedAt: new Date().toISOString() };
