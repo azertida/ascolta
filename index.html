@@ -182,6 +182,8 @@ const EN = {
   'Artiste': 'Artist', 'Titre ou album': 'Title or album',
   'Lien (facultatif)': 'Link (optional)',
   'Colle le lien de ta plateforme, si tu en as un.': 'Paste the link from your platform, if you have one.',
+  'Tu peux aussi coller le message de partage de Deezer entier.': 'You can also paste the whole Deezer share message.',
+  'Artiste et titre repris du message. Vérifie-les.': 'Artist and title taken from the message. Check them.',
   'Ton mot (facultatif)': 'Your note (optional)',
   ['Pourquoi ce morceau' + NB + '?']: 'Why this track?',
   'Ton prénom': 'Your first name',
@@ -407,7 +409,7 @@ function showCompose(prefill) {
     <label class="f" for="cArtist">${esc(t('Artiste'))}</label><input class="inp" id="cArtist" maxlength="120" value="${esc(p.artist)}" autocomplete="off">
     <label class="f" for="cTitle">${esc(t('Titre ou album'))}</label><input class="inp" id="cTitle" maxlength="160" value="${esc(p.title)}" autocomplete="off">
     <label class="f" for="cUrl">${esc(t('Lien (facultatif)'))}</label><input class="inp" id="cUrl" type="url" inputmode="url" maxlength="600" value="${esc(p.url)}" autocomplete="off">
-    <div class="hint"><span>${esc(t('Colle le lien de ta plateforme, si tu en as un.'))}</span></div>
+    <div class="hint"><span id="cUrlHint">${esc(t('Colle le lien de ta plateforme, si tu en as un.'))} ${esc(t('Tu peux aussi coller le message de partage de Deezer entier.'))}</span></div>
     <label class="f" for="cNote">${esc(t('Ton mot (facultatif)'))}</label><textarea class="inp" id="cNote" maxlength="${NOTE_MAX}" placeholder="${esc(t('Pourquoi ce morceau' + NB + '?'))}"></textarea>
     <div class="hint"><span></span><span id="cCount">0/${NOTE_MAX}</span></div>
     <label class="f" for="cName">${esc(t('Ton prénom'))}</label><input class="inp" id="cName" maxlength="40" value="${esc(myName)}" autocomplete="given-name">
@@ -415,6 +417,35 @@ function showCompose(prefill) {
     <button class="btn primary" data-act="send">${esc(t('Partager'))}</button>`;
   openSheet(html, { kind: 'compose' });
   $('cNote').addEventListener('input', e => $('cCount').textContent = e.target.value.length + '/' + NOTE_MAX);
+  // Message de partage collé dans Artiste, Titre ou Lien : on le répartit dans les champs
+  ['cArtist', 'cTitle', 'cUrl'].forEach(id => $(id).addEventListener('paste', e => {
+    const txt = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+    if (applyShare(txt, id)) e.preventDefault();
+  }));
+  // Filet si le collage n'est pas intercepté (clavier, menu contextuel…)
+  $('cUrl').addEventListener('input', e => applyShare(e.target.value, 'cUrl', true));
+}
+// « Écoute TITRE de ARTISTE sur toutes les principales apps… 🎧 https://… » (Deezer, FR/EN)
+function parseShare(text) {
+  const m = String(text || '').match(/https?:\/\/\S+/);
+  if (!m) return null;
+  const before = text.slice(0, m.index).trim();
+  let x = before.match(/^[ÉEé]coute\s+(.+)\s+de\s+(.+?)\s+sur\s+/i) || before.match(/^Listen to\s+(.+)\s+by\s+(.+?)\s+on\s+/i);
+  return x ? { title: x[1].trim(), artist: x[2].trim(), url: m[0] } : { url: m[0] };
+}
+function applyShare(text, fieldId, fromInput) {
+  const p = parseShare(text);
+  if (!p || !p.title) {
+    // Adresse seule collée ailleurs que dans Lien : on la range dans Lien
+    if (p && !fromInput && fieldId !== 'cUrl' && /^\s*https?:\/\/\S+\s*$/.test(text)) { $('cUrl').value = p.url; return true; }
+    return false;
+  }
+  const a = $('cArtist'), ti = $('cTitle');
+  if (!a.value.trim() || fieldId === 'cArtist') a.value = p.artist.slice(0, 120);
+  if (!ti.value.trim() || fieldId === 'cTitle') ti.value = p.title.slice(0, 160);
+  $('cUrl').value = p.url;
+  $('cUrlHint').textContent = t('Artiste et titre repris du message. Vérifie-les.');
+  return true;
 }
 async function sendCompose() {
   const artist = $('cArtist').value.trim(), title = $('cTitle').value.trim(), note = $('cNote').value.trim().slice(0, NOTE_MAX), name = $('cName').value.trim();
