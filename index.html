@@ -283,6 +283,17 @@ function safeUrl(u) {
   if (dz) return 'https://www.deezer.com/' + dz.type + '/' + dz.id;
   try { const x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : ''; } catch (e) { return ''; }
 }
+// Raccourcit les liens : retire les paramètres de suivi (host, utm, si…) là où ils ne servent à rien
+function cleanUrl(u) {
+  const dz = deezerRef(u);
+  if (dz) return 'https://www.deezer.com/' + dz.type + '/' + dz.id;
+  try {
+    const x = new URL(u), h = x.hostname.replace(/^www\./, '');
+    if (/(^|\.)spotify\.com$|(^|\.)tidal\.com$|(^|\.)qobuz\.com$|(^|\.)bandcamp\.com$|(^|\.)soundcloud\.com$/.test(h)) { x.search = ''; x.hash = ''; return x.href; }
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'si', 'feature', 'ls'].forEach(k => x.searchParams.delete(k));
+    return x.href;
+  } catch (e) { return u; }
+}
 // Lien Deezer long : https://www.deezer.com/fr/album/1027942262?host=… -> { type: 'album', id: '1027942262' }
 function deezerRef(u) {
   const m = String(u || '').match(/^https?:\/\/(?:www\.)?deezer\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(album|track)\/(\d+)/i);
@@ -506,6 +517,7 @@ async function sendCompose() {
     const m = url.match(/https?:\/\/\S+/); url = safeUrl(m ? m[0] : url);
     if (!url) return err('Ce lien ne ressemble pas à une adresse web.');
     if (deadLink(url)) url = '';
+    url = cleanUrl(url);
   }
   myName = name; save('ascolta.name', myName);
   const r = { id: newId(), dir: 'out', artist, title, note, from: name, date: today(), url, savedAt: new Date().toISOString() };
