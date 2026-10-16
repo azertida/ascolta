@@ -139,6 +139,24 @@ details.others a{color:#c4b5fd;text-decoration:none;display:block;padding:6px 0}
 .lang button{flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a4a;background:#16213e;font-weight:700}
 .lang button.on{background:#8b5cf6;border-color:#8b5cf6;color:#fff}
 
+/* Calendrier de l'Avent */
+.sticker.cal{background:#f43f5e;color:#fff;transform:rotate(-3deg)}
+.cal-sub{font-size:.9em;color:#cbd5e1}
+.cal-count{font-size:.85em;color:#94a3b8;margin-top:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 4px}
+@media (min-width:520px){.cal-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.cday{aspect-ratio:1;min-width:0;border-radius:12px;border:1px solid #2a2a4a;background:#16213e;color:#e2e8f0;
+  font-weight:800;font-size:1.3em;line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cday small{font-size:.5em;font-weight:600;opacity:.85}
+.cday.open{background:linear-gradient(135deg,#f43f5e,#fb923c);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(244,63,94,.35)}
+.cday.seen{background:#2e1f5e;border-color:#4c3a8a;color:#c4b5fd}
+.cday.locked{color:#475569;cursor:default}
+.cday.filled{border-color:#22c55e;background:rgba(34,197,94,.1);color:#bbf7d0}
+.cday.blank{border-style:dashed;color:#64748b}
+.cday.today{outline:2px solid #fde047;outline-offset:2px}
+.fiche .cal-date{color:#fb923c;font-weight:800;font-size:.85em;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px;padding-right:40px}
+.fiche.day .ttl{padding-right:0}
+
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
   background:#8b5cf6;color:#fff;padding:11px 18px;border-radius:24px;font-weight:600;font-size:.92em;
   z-index:100;box-shadow:0 8px 24px rgba(139,92,246,.45);max-width:90vw;text-align:center}
@@ -229,6 +247,48 @@ const EN = {
   ['Aucun serveur' + NB + ': tes recos restent sur cet appareil et dans les liens que tu envoies.']: 'No server: your recommendations stay on this device and in the links you send.',
   ['«' + NB + '{n}' + NB + '»']: '“{n}”',
   ['Écoute sur ta plateforme' + NB + ':']: 'Listen on your platform:',
+  // Calendrier de l'Avent
+  'Calendrier de l’Avent': 'Advent calendar', 'Avent': 'Advent',
+  'Créer mon calendrier de l’Avent': 'Create my Advent calendar',
+  'Ouvrir mon calendrier de l’Avent': 'Open my Advent calendar',
+  'Mon calendrier de l’Avent {y}': 'My Advent calendar {y}',
+  'Calendrier de l’Avent de {name}': '{name}’s Advent calendar',
+  '{n}/24 cases remplies': '{n}/24 doors filled',
+  'Une case par jour, du 1er au 24 décembre. Touche une case pour choisir son morceau.': 'One door a day, from 1 to 24 December. Tap a door to choose its track.',
+  'Ton mot d’accueil (facultatif)': 'Your welcome note (optional)',
+  'Partager le calendrier': 'Share the calendar',
+  'Aperçu': 'Preview',
+  'Supprimer le calendrier': 'Delete the calendar',
+  ['Supprimer ce calendrier' + NB + '?']: 'Delete this calendar?',
+  'Case du {d} décembre': 'December {d}',
+  'Enregistrer la case': 'Save this door',
+  'Vider la case': 'Empty this door',
+  ['Il manque {n} case(s). Partager quand même' + NB + '?']: '{n} door(s) still empty. Share anyway?',
+  'Mon calendrier de l’Avent musical': 'My musical Advent calendar',
+  'Un morceau par jour, du 1er au 24 décembre.': 'One track a day, from 1 to 24 December.',
+  ['Ouvre-le ici' + NB + ':']: 'Open it here:',
+  'Première case le 1er décembre.': 'First door opens on 1 December.',
+  '{n} case à ouvrir': '{n} door to open', '{n} cases à ouvrir': '{n} doors to open',
+  'Toutes les cases sont ouvertes.': 'All doors are open.',
+  'Prochaine case demain.': 'Next door tomorrow.',
+  '{d} décembre': 'December {d}',
+  'Retour au calendrier': 'Back to the calendar',
+  'Tu vois le calendrier comme tes proches le verront, case par case.': 'You see the calendar as your recipients will, door by door.',
+  'Garde ton calendrier': 'Keep your calendar',
+  'Ajoute Ascolta à ton écran d’accueil pour ouvrir une case chaque jour.': 'Add Ascolta to your home screen to open a door every day.',
+  'Ce lien de calendrier est abîmé ou incomplet.': 'This calendar link is damaged or incomplete.',
+  'C’est ton calendrier.': 'This is your calendar.',
+  'Calendrier mis à jour': 'Calendar updated',
+  'Retirer ce calendrier': 'Remove this calendar',
+  ['Retirer ce calendrier de cet appareil' + NB + '?']: 'Remove this calendar from this device?',
+  'Case enregistrée': 'Door saved',
+  'Nouveau calendrier de l’Avent': 'New Advent calendar',
+  'Calendrier pour {who}': 'Calendar for {who}',
+  ['Pour qui' + NB + '? (visible par toi seule)']: 'For whom? (only you see this)',
+  'Maman, les copines…': 'Mum, the girls…',
+  'Dupliquer': 'Duplicate',
+  '{l} (copie)': '{l} (copy)',
+  'Copie créée : change ce qui doit l’être, puis partage-la.': 'Copy created: change what you need, then share it.',
 };
 let lang = load('ascolta.lang', null) || ((navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en');
 function t(fr, vars) {
@@ -351,6 +411,71 @@ const $ = id => document.getElementById(id);
 const STATUSES = [['todo', 'À écouter'], ['done', 'Écoutée'], ['love', 'Coup de cœur']];
 const STATUS_ICON = { todo: '⏳', done: '✓', love: '♥' };
 
+// ============ CALENDRIER DE L'AVENT : 24 morceaux dans un seul lien, une case par jour ============
+const DAYS = 24, CAL_NOTE_MAX = 200;
+let cals = load('ascolta.cals', []);
+if (!Array.isArray(cals)) cals = [];
+function persistCals() { save('ascolta.cals', cals); }
+// Pour tester : ?date=2026-12-05 fait comme si on était ce jour-là (n'agit que sur l'ouverture des cases)
+const DATE_TEST = (() => { const d = new URLSearchParams(location.search).get('date') || ''; return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null; })();
+function calToday() { return DATE_TEST || today(); } // date LOCALE, jamais UTC
+function dayKey(y, d) { return y + '-12-' + String(d).padStart(2, '0'); }
+function dayOpen(c, d, preview) { return (c.dir === 'out' && !preview) || calToday() >= dayKey(c.year, d); }
+function filledCount(c) { return c.days.filter(Boolean).length; }
+function calYear() { const n = new Date(); return n.getMonth() === 11 && n.getDate() > 24 ? n.getFullYear() + 1 : n.getFullYear(); }
+// Charge utile : k='c', i=id, f=prénom, y=année, m=mot d'accueil, d=24 cases [artiste, titre, mot?, lien?] ou 0
+function toCalPayload(c) {
+  const o = { v: 1, k: 'c', i: c.id, f: (c.from || '').trim(), y: c.year,
+    d: c.days.map(x => !x ? 0 : x.url ? [x.artist, x.title, x.note || '', x.url] : x.note ? [x.artist, x.title, x.note] : [x.artist, x.title]) };
+  if ((c.note || '').trim()) o.m = c.note.trim();
+  return o;
+}
+function fromCalPayload(o) {
+  const str = (x, max) => typeof x === 'string' ? x.trim().slice(0, max) : '';
+  if (!o || o.k !== 'c' || !Array.isArray(o.d)) throw new Error('format');
+  const y = Number(o.y);
+  const c = { id: str(o.i, 40), from: str(o.f, 40), year: Number.isInteger(y) && y >= 2020 && y <= 2100 ? y : calYear(), note: str(o.m, CAL_NOTE_MAX), days: [] };
+  for (let i = 0; i < DAYS; i++) {
+    const x = o.d[i];
+    c.days.push(Array.isArray(x) && str(x[0], 120) && str(x[1], 160)
+      ? { artist: str(x[0], 120), title: str(x[1], 160), note: str(x[2], NOTE_MAX), url: safeUrl(str(x[3], 600)) } : null);
+  }
+  if (!c.id) throw new Error('champs');
+  return c;
+}
+function calTitle(c) { return c.dir === 'out' ? ((c.label || '').trim() ? t('Calendrier pour {who}', { who: c.label.trim() }) : t('Mon calendrier de l’Avent {y}', { y: c.year })) : t('Calendrier de l’Avent de {name}', { name: c.from || '?' }); }
+function calStatus(c, preview) {
+  if (c.dir === 'out' && !preview) return t('{n}/24 cases remplies', { n: filledCount(c) });
+  const now = calToday(), seen = preview ? [] : (c.opened || []);
+  if (now < dayKey(c.year, 1)) return t('Première case le 1er décembre.');
+  let n = 0;
+  for (let d = 1; d <= DAYS; d++) if (dayOpen(c, d, preview) && c.days[d - 1] && !seen.includes(d)) n++;
+  if (n) return t(n > 1 ? '{n} cases à ouvrir' : '{n} case à ouvrir', { n });
+  return t(now >= dayKey(c.year, DAYS) ? 'Toutes les cases sont ouvertes.' : 'Prochaine case demain.');
+}
+function calGrid(c, mode) { // mode : 'edit' (l'autrice remplit) | 'view' (destinataire) | 'preview' (l'autrice voit comme ses proches)
+  const now = calToday(), seen = mode === 'view' ? (c.opened || []) : [];
+  let html = '<div class="cal-grid">';
+  for (let d = 1; d <= DAYS; d++) {
+    const x = c.days[d - 1], isToday = now === dayKey(c.year, d) ? ' today' : '';
+    if (mode === 'edit') { html += `<button class="cday ${x ? 'filled' : 'blank'}${isToday}" data-act="cday" data-d="${d}">${d}<small>${x ? '♪' : '+'}</small></button>`; continue; }
+    if (!dayOpen(c, d, mode === 'preview')) html += `<button class="cday locked${isToday}" disabled>${d}<small>🔒</small></button>`;
+    else if (!x) html += `<button class="cday locked${isToday}" disabled>${d}<small>·</small></button>`;
+    else html += `<button class="cday ${seen.includes(d) ? 'seen' : 'open'}${isToday}" data-act="copen" data-d="${d}">${d}<small>${seen.includes(d) ? '♪' : '🎁'}</small></button>`;
+  }
+  return html + '</div>';
+}
+function startCal() {
+  const c = { id: newId(), dir: 'out', label: '', from: myName, year: calYear(), note: '', days: Array(DAYS).fill(null), savedAt: new Date().toISOString() };
+  cals.push(c); persistCals(); renderList(); showCalEdit(c.id, true);
+}
+// Dupliquer : mêmes cases, même mot, nouvel identifiant (donc un lien indépendant)
+function dupCal(src) {
+  const c = JSON.parse(JSON.stringify(src));
+  Object.assign(c, { id: newId(), label: (src.label || '').trim() ? t('{l} (copie)', { l: src.label.trim() }) : '', savedAt: new Date().toISOString() });
+  cals.push(c); persistCals(); renderList(); showCalEdit(c.id, true); toast(t('Copie créée : change ce qui doit l’être, puis partage-la.'));
+}
+
 // ============ LISTE ============
 let filter = 'all';
 const FILTERS = [['all', 'Tout'], ['in', 'Reçues'], ['out', 'Envoyées'], ['todo', 'À écouter'], ['love', 'Coup de cœur']];
@@ -369,9 +494,12 @@ function renderList() {
   if (filter === 'todo' || filter === 'love') items = items.filter(r => r.dir === 'in' && r.status === filter);
   if (q) items = items.filter(r => [r.artist, r.title, r.note, r.from].join(' ').toLowerCase().includes(q));
   const list = $('list');
-  if (!recos.length) { list.innerHTML = `<div class="empty"><strong>${esc(t('Aucune reco pour l’instant.'))}</strong>${esc(t('Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.'))}</div>`; return; }
-  if (!items.length) { list.innerHTML = `<div class="empty">${esc(t('Aucune reco ne correspond.'))}</div>`; return; }
-  list.innerHTML = items.map(r => {
+  let shownCals = filter === 'all' ? cals.slice().sort((a, b) => b.year - a.year || (a.dir === 'out' ? -1 : 1)) : [];
+  if (q) shownCals = shownCals.filter(c => [calTitle(c), c.from, t('Calendrier de l’Avent')].join(' ').toLowerCase().includes(q));
+  if (!recos.length && !cals.length) { list.innerHTML = `<div class="empty"><strong>${esc(t('Aucune reco pour l’instant.'))}</strong>${esc(t('Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.'))}</div>`; return; }
+  if (!items.length && !shownCals.length) { list.innerHTML = `<div class="empty">${esc(t('Aucune reco ne correspond.'))}</div>`; return; }
+  list.innerHTML = shownCals.map(c => `<button class="card" data-cal="${esc(c.id)}"><span class="sticker cal">🎄 ${esc(t('Avent'))}</span>
+      <div class="title">${esc(calTitle(c))}</div><div class="meta"><span>${esc(calStatus(c))}</span></div></button>`).join('') + items.map(r => {
     const meta = [];
     if (r.dir === 'in') meta.push(esc(t('de {name}', { name: r.from })));
     meta.push(esc(fmtDate(r.date)));
@@ -431,28 +559,95 @@ function showIncoming(r) {
   else if (mine) html += `<button class="btn ghost" disabled>✓ ${esc(t('Déjà dans ta liste'))}</button>`;
   else html += `<button class="btn orange" data-act="add">${esc(t('Ajouter à ma liste'))}</button>`;
   html += '</div>';
-  if (!recos.length && !mine) {
-    const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
-    if (ios || android) html += `<div class="invite"><strong>${esc(t('Garde tes recos'))}</strong><p>${esc(t('Ajoute Ascolta à ton écran d’accueil pour retrouver cette reco et partager les tiennes.'))}</p>
-      <p>${esc(t(ios ? 'Touche le bouton Partager de Safari, puis «' + NB + 'Sur l’écran d’accueil' + NB + '».' : 'Ouvre le menu ⋮ du navigateur, puis «' + NB + 'Ajouter à l’écran d’accueil' + NB + '».'))}</p></div>`;
-  }
+  if (!recos.length && !cals.length && !mine) html += inviteBlock('Garde tes recos', 'Ajoute Ascolta à ton écran d’accueil pour retrouver cette reco et partager les tiennes.');
   openSheet(html, { kind: 'incoming', reco: r });
+}
+function inviteBlock(title, text) {
+  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
+  if (!ios && !android) return '';
+  return `<div class="invite"><strong>${esc(t(title))}</strong><p>${esc(t(text))}</p>
+    <p>${esc(t(ios ? 'Touche le bouton Partager de Safari, puis «' + NB + 'Sur l’écran d’accueil' + NB + '».' : 'Ouvre le menu ⋮ du navigateur, puis «' + NB + 'Ajouter à l’écran d’accueil' + NB + '».'))}</p></div>`;
+}
+
+// ----- Calendrier : l'autrice le remplit -----
+function showCalEdit(id, focusFor) {
+  const c = cals.find(x => x.id === id); if (!c) return;
+  const html = `<h2 id="calH">🎄 ${esc(calTitle(c))}</h2>
+    <label class="f" for="calFor">${esc(t('Pour qui' + NB + '? (visible par toi seule)'))}</label><input class="inp" id="calFor" maxlength="40" value="${esc(c.label)}" placeholder="${esc(t('Maman, les copines…'))}" autocomplete="off">
+    <p class="cal-sub">${esc(t('Une case par jour, du 1er au 24 décembre. Touche une case pour choisir son morceau.'))}</p>
+    <p class="cal-count">${esc(t('{n}/24 cases remplies', { n: filledCount(c) }))}</p>
+    ${calGrid(c, 'edit')}
+    <label class="f" for="calNote">${esc(t('Ton mot d’accueil (facultatif)'))}</label><textarea class="inp" id="calNote" maxlength="${CAL_NOTE_MAX}">${esc(c.note)}</textarea>
+    <label class="f" for="calName">${esc(t('Ton prénom'))}</label><input class="inp" id="calName" maxlength="40" value="${esc(c.from)}" autocomplete="given-name">
+    <div class="err" id="calErr"></div>
+    <div class="actions"><button class="btn primary" data-act="cshare">${esc(t('Partager le calendrier'))}</button>
+      <div class="row"><button class="btn ghost" data-act="cpreview">👀 ${esc(t('Aperçu'))}</button><button class="btn ghost" data-act="cdup">⧉ ${esc(t('Dupliquer'))}</button></div>
+      <button class="btn danger" data-act="cdelete">${esc(t('Supprimer le calendrier'))}</button></div>`;
+  openSheet(html, { kind: 'caledit', id });
+  $('calFor').addEventListener('input', e => { c.label = e.target.value.slice(0, 40); persistCals(); renderList(); $('calH').textContent = '🎄 ' + calTitle(c); });
+  if (focusFor) $('calFor').focus();
+  $('calNote').addEventListener('input', e => { c.note = e.target.value.slice(0, CAL_NOTE_MAX); persistCals(); });
+  $('calName').addEventListener('input', e => { c.from = e.target.value.slice(0, 40); persistCals(); renderList(); });
+}
+async function shareCal(c) {
+  if (!(c.from || '').trim()) { $('calErr').textContent = t('Indique ton prénom.'); $('calName').focus(); return; }
+  myName = c.from.trim(); save('ascolta.name', myName);
+  const missing = DAYS - filledCount(c);
+  if (missing && !confirm(t('Il manque {n} case(s). Partager quand même' + NB + '?', { n: missing }))) return;
+  const link = location.origin + location.pathname + '#c=' + await encodeReco(toCalPayload(c));
+  const lines = ['🎄 ' + t('Mon calendrier de l’Avent musical'), t('Un morceau par jour, du 1er au 24 décembre.')];
+  if ((c.note || '').trim()) lines.push(t('«' + NB + '{n}' + NB + '»', { n: c.note.trim() }));
+  lines.push('', t('Ouvre-le ici' + NB + ':'), link);
+  await shareText(lines.join('\n'), link);
+}
+
+// ----- Calendrier : les proches l'ouvrent (ou l'autrice en aperçu) -----
+function showCalView(id, opts) {
+  const c = cals.find(x => x.id === id); if (!c) return;
+  const o = opts || {}, preview = !!o.preview;
+  let html = `<h2>🎄 ${esc(preview ? t('Calendrier de l’Avent de {name}', { name: c.from || '?' }) : calTitle(c))}</h2>`;
+  if (preview) html += `<p class="cal-sub">👀 ${esc(t('Tu vois le calendrier comme tes proches le verront, case par case.'))}</p>`;
+  if ((c.note || '').trim()) html += `<div class="fiche"><div class="mot">${esc(c.note.trim())}</div></div>`;
+  html += `<p class="cal-count" style="margin-top:12px">${esc(calStatus(c, preview))}</p>` + calGrid(c, preview ? 'preview' : 'view');
+  if (o.welcome) html += inviteBlock('Garde ton calendrier', 'Ajoute Ascolta à ton écran d’accueil pour ouvrir une case chaque jour.');
+  html += '<div class="actions">' + (preview
+    ? `<button class="btn ghost" data-act="cedit">${esc(t('Retour au calendrier'))}</button>`
+    : `<button class="btn danger" data-act="cremove">${esc(t('Retirer ce calendrier'))}</button>`) + '</div>';
+  openSheet(html, { kind: 'calview', id, preview });
+}
+function showCalDay(id, d, preview) {
+  const c = cals.find(x => x.id === id), x = c && c.days[d - 1];
+  if (!x || !dayOpen(c, d, preview)) return;
+  if (!preview && c.dir === 'in') { c.opened = c.opened || []; if (!c.opened.includes(d)) { c.opened.push(d); persistCals(); renderList(); } }
+  const r = { dir: 'in', artist: x.artist, title: x.title, note: x.note, url: x.url };
+  let html = `<div class="fiche day"><div class="cal-date">🎄 ${esc(t('{d} décembre', { d }))}</div>
+    <div class="ttl">${esc(x.title)}</div><div class="art">${esc(x.artist)}</div>
+    <div class="by">${esc(t('Recommandé par {name}, le {date}', { name: c.from || '?', date: fmtDate(dayKey(c.year, d)) }))}</div>
+    ${x.note ? `<div class="mot">${esc(x.note)}</div>` : ''}</div>` + listenBlock(r) + '<div class="actions">';
+  if (!preview) html += recos.some(z => z.id === c.id + '-' + d)
+    ? `<button class="btn ghost" disabled>✓ ${esc(t('Déjà dans ta liste'))}</button>`
+    : `<button class="btn orange" data-act="cadd">${esc(t('Ajouter à ma liste'))}</button>`;
+  html += `<button class="btn ghost" data-act="cback">← ${esc(t('Retour au calendrier'))}</button></div>`;
+  openSheet(html, { kind: 'calday', id, day: d, preview });
 }
 
 // ----- Composer une reco -----
-function showCompose(prefill) {
-  const p = prefill || {};
-  const html = `<h2>${esc(t('Partager un morceau'))}</h2>
+function showCompose(prefill, ctx) {
+  const p = prefill || {}, day = ctx && ctx.cal ? ctx : null; // day : case d'un calendrier
+  const html = `<h2>${esc(day ? '🎄 ' + t('Case du {d} décembre', { d: day.day }) : t('Partager un morceau'))}</h2>
     <label class="f" for="cArtist">${esc(t('Artiste'))}</label><input class="inp" id="cArtist" maxlength="120" value="${esc(p.artist)}" autocomplete="off">
     <label class="f" for="cTitle">${esc(t('Titre ou album'))}</label><input class="inp" id="cTitle" maxlength="160" value="${esc(p.title)}" autocomplete="off">
     <label class="f" for="cUrl">${esc(t('Lien (facultatif)'))}</label><input class="inp" id="cUrl" type="url" inputmode="url" maxlength="600" value="${esc(p.url)}" autocomplete="off">
     <div class="hint"><span id="cUrlHint">${esc(t('Colle le lien de ta plateforme, si tu en as un.'))}</span></div>
-    <label class="f" for="cNote">${esc(t('Ton mot (facultatif)'))}</label><textarea class="inp" id="cNote" maxlength="${NOTE_MAX}" placeholder="${esc(t('Pourquoi ce morceau' + NB + '?'))}"></textarea>
-    <div class="hint"><span></span><span id="cCount">0/${NOTE_MAX}</span></div>
-    <label class="f" for="cName">${esc(t('Ton prénom'))}</label><input class="inp" id="cName" maxlength="40" value="${esc(myName)}" autocomplete="given-name">
+    <label class="f" for="cNote">${esc(t('Ton mot (facultatif)'))}</label><textarea class="inp" id="cNote" maxlength="${NOTE_MAX}" placeholder="${esc(t('Pourquoi ce morceau' + NB + '?'))}">${esc(p.note)}</textarea>
+    <div class="hint"><span></span><span id="cCount">${(p.note || '').length}/${NOTE_MAX}</span></div>
+    ${day ? '' : `<label class="f" for="cName">${esc(t('Ton prénom'))}</label><input class="inp" id="cName" maxlength="40" value="${esc(myName)}" autocomplete="given-name">`}
     <div class="err" id="cErr"></div>
-    <button class="btn primary" data-act="send">${esc(t('Partager'))}</button>`;
-  openSheet(html, { kind: 'compose' });
+    ${day ? `<button class="btn primary" data-act="send">${esc(t('Enregistrer la case'))}</button>
+      ${p.artist ? `<button class="btn danger" data-act="cclear">${esc(t('Vider la case'))}</button>` : ''}
+      <button class="btn ghost" data-act="cedit">${esc(t('Annuler'))}</button>`
+    : `<button class="btn primary" data-act="send">${esc(t('Partager'))}</button>`}`;
+  openSheet(html, day ? { kind: 'compose', cal: day.cal, day: day.day } : { kind: 'compose' });
   $('cNote').addEventListener('input', e => $('cCount').textContent = e.target.value.length + '/' + NOTE_MAX);
   // Message de partage collé dans Artiste, Titre ou Lien : on le répartit dans les champs
   ['cArtist', 'cTitle', 'cUrl'].forEach(id => $(id).addEventListener('paste', e => {
@@ -507,17 +702,22 @@ function applyShare(text, fieldId, fromInput) {
   return true;
 }
 async function sendCompose() {
-  const artist = $('cArtist').value.trim(), title = $('cTitle').value.trim(), note = $('cNote').value.trim().slice(0, NOTE_MAX), name = $('cName').value.trim();
+  const st = sheetState || {}, cal = st.cal ? cals.find(c => c.id === st.cal) : null;
+  const artist = $('cArtist').value.trim(), title = $('cTitle').value.trim(), note = $('cNote').value.trim().slice(0, NOTE_MAX), name = $('cName') ? $('cName').value.trim() : '';
   let url = $('cUrl').value.trim();
   const err = m => $('cErr').textContent = t(m);
   if (!artist || !title) return err('Indique l’artiste et le titre.');
-  if (!name) return err('Indique ton prénom.');
+  if (!name && !cal) return err('Indique ton prénom.');
   if (url) {
     // On extrait l'adresse si l'appli a collé « texte + lien » (Spotify, Deezer le font)
     const m = url.match(/https?:\/\/\S+/); url = safeUrl(m ? m[0] : url);
     if (!url) return err('Ce lien ne ressemble pas à une adresse web.');
     if (deadLink(url)) url = '';
     url = cleanUrl(url);
+  }
+  if (cal) {
+    cal.days[st.day - 1] = { artist, title, note, url }; persistCals(); renderList();
+    showCalEdit(cal.id); toast('✓ ' + t('Case enregistrée')); return;
   }
   myName = name; save('ascolta.name', myName);
   const r = { id: newId(), dir: 'out', artist, title, note, from: name, date: today(), url, savedAt: new Date().toISOString() };
@@ -530,7 +730,9 @@ async function shareReco(r) {
   const lines = ['🎵 ' + r.artist + ' — ' + r.title];
   if (r.note) lines.push(t('«' + NB + '{n}' + NB + '»', { n: r.note }));
   lines.push('', t('Écoute sur ta plateforme' + NB + ':'), link);
-  const text = lines.join('\n');
+  await shareText(lines.join('\n'), link);
+}
+async function shareText(text, link) {
   if (navigator.share) {
     try { await navigator.share({ text }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
@@ -545,6 +747,8 @@ function showSettings() {
     <h3>${esc(t('Langue'))}</h3><div class="lang"><button class="${lang === 'fr' ? 'on' : ''}" data-act="lang" data-l="fr">Français</button><button class="${lang === 'en' ? 'on' : ''}" data-act="lang" data-l="en">English</button></div>
     <h3><label for="sPlat">${esc(t('Ma plateforme'))}</label></h3><select class="inp" id="sPlat"><option value="">${esc(t('Aucune'))}</option>${PLATFORMS.map(p => `<option value="${p.id}"${myPlatform === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
     <h3><label for="sName">${esc(t('Mon prénom'))}</label></h3><input class="inp" id="sName" maxlength="40" value="${esc(myName)}">
+    <h3>🎄 ${esc(t('Calendrier de l’Avent'))}</h3>
+    <button class="btn ghost" data-act="cstart">${esc(t(cals.some(c => c.dir === 'out') ? 'Nouveau calendrier de l’Avent' : 'Créer mon calendrier de l’Avent'))}</button>
     <h3>${esc(t('Sauvegarde'))}</h3>
     <button class="btn ghost" data-act="export">${esc(t('Exporter mes recos'))}</button>
     <button class="btn ghost" data-act="import">${esc(t('Importer une sauvegarde'))}</button>
@@ -557,7 +761,7 @@ function showSettings() {
   $('sFile').addEventListener('change', importFile);
 }
 function exportData() {
-  const blob = new Blob([JSON.stringify({ app: 'ascolta', v: 1, recos }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'ascolta', v: 1, recos, cals }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ascolta-' + today() + '.json';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
@@ -567,6 +771,18 @@ async function importFile(e) {
     const data = JSON.parse(await f.text()); const arr = Array.isArray(data) ? data : data.recos;
     if (!Array.isArray(arr)) throw 0;
     let n = 0;
+    for (const x of (Array.isArray(data.cals) ? data.cals : [])) {
+      if (!x || !x.id || !Array.isArray(x.days) || cals.some(c => c.id === x.id)) continue;
+      try {
+        const c = fromCalPayload(toCalPayload(x));
+        c.dir = x.dir === 'out' ? 'out' : 'in';
+        if (c.dir === 'out' && typeof x.label === 'string') c.label = x.label.slice(0, 40);
+        c.opened = Array.isArray(x.opened) ? x.opened.filter(d => Number.isInteger(d) && d >= 1 && d <= DAYS) : [];
+        c.savedAt = typeof x.savedAt === 'string' ? x.savedAt : new Date().toISOString();
+        cals.push(c); n++;
+      } catch (err) {}
+    }
+    persistCals();
     for (const x of arr) {
       if (!x || !x.id || recos.some(r => r.id === x.id)) continue;
       try {
@@ -584,7 +800,12 @@ async function importFile(e) {
 // ============ ÉVÉNEMENTS ============
 $('chips').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; filter = b.dataset.f; renderAll(); });
 $('search').addEventListener('input', renderList);
-$('list').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) showDetail(c.dataset.id); });
+$('list').addEventListener('click', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  if (!card.dataset.cal) return showDetail(card.dataset.id);
+  const c = cals.find(x => x.id === card.dataset.cal);
+  if (c) c.dir === 'out' ? showCalEdit(c.id) : showCalView(c.id);
+});
 $('fab').addEventListener('click', () => showCompose());
 $('menuBtn').addEventListener('click', showSettings);
 $('ov').addEventListener('click', e => { if (e.target === $('ov')) closeSheet(); });
@@ -596,6 +817,7 @@ $('sheet').addEventListener('click', async e => {
   if (act === 'pick') {
     myPlatform = b.dataset.p; save('ascolta.platform', myPlatform);
     if (st.kind === 'detail') showDetail(st.id); else if (st.kind === 'incoming') showIncoming(st.reco);
+    else if (st.kind === 'calday') showCalDay(st.id, st.day, st.preview);
     return;
   }
   if (act === 'send') return sendCompose();
@@ -611,16 +833,48 @@ $('sheet').addEventListener('click', async e => {
   if (act === 'lang') { lang = b.dataset.l; save('ascolta.lang', lang); renderAll(); showSettings(); return; }
   if (act === 'export') return exportData();
   if (act === 'import') return $('sFile').click();
-  if (act === 'wipe') { if (confirm(t('Effacer toutes tes recos' + NB + '? Pense à exporter d’abord.'))) { recos = []; persist(); closeSheet(); renderList(); } return; }
+  if (act === 'wipe') { if (confirm(t('Effacer toutes tes recos' + NB + '? Pense à exporter d’abord.'))) { recos = []; persist(); cals = []; persistCals(); closeSheet(); renderList(); } return; }
+  // Calendrier
+  const c = cals.find(x => x.id === st.id);
+  if (act === 'cstart') return startCal();
+  if (act === 'cday' && c) { const d = +b.dataset.d; return showCompose(c.days[d - 1] || {}, { cal: c.id, day: d }); }
+  if (act === 'cclear' && st.cal) { const k = cals.find(x => x.id === st.cal); k.days[st.day - 1] = null; persistCals(); renderList(); return showCalEdit(k.id); }
+  if (act === 'cedit') return showCalEdit(st.cal || st.id);
+  if (act === 'cshare' && c) return shareCal(c);
+  if (act === 'cdup' && c) return dupCal(c);
+  if (act === 'cpreview' && c) return showCalView(c.id, { preview: true });
+  if (act === 'cdelete' && c) { if (confirm(t('Supprimer ce calendrier' + NB + '?'))) { cals = cals.filter(x => x.id !== c.id); persistCals(); closeSheet(); renderList(); } return; }
+  if (act === 'cremove' && c) { if (confirm(t('Retirer ce calendrier de cet appareil' + NB + '?'))) { cals = cals.filter(x => x.id !== c.id); persistCals(); closeSheet(); renderList(); } return; }
+  if (act === 'copen' && c) return showCalDay(c.id, +b.dataset.d, st.preview);
+  if (act === 'cback' && c) return showCalView(c.id, { preview: st.preview });
+  if (act === 'cadd' && c) {
+    const x = c.days[st.day - 1], rid = c.id + '-' + st.day;
+    if (x && !recos.some(z => z.id === rid)) { recos.push({ id: rid, dir: 'in', status: 'todo', artist: x.artist, title: x.title, note: x.note, url: x.url, from: c.from, date: dayKey(c.year, st.day), savedAt: new Date().toISOString() }); persist(); renderList(); }
+    toast('✓ ' + t('Ajoutée à ta liste')); return showCalDay(c.id, st.day, st.preview);
+  }
 });
 
 // ============ OUVERTURE D'UN LIEN REÇU ============
 async function handleHash() {
-  const m = location.hash.match(/^#r=([A-Za-z0-9_-]+)$/);
+  const m = location.hash.match(/^#([rc])=([A-Za-z0-9_-]+)$/);
   if (!m) return;
-  history.replaceState(null, '', location.pathname);
-  try { showIncoming(fromPayload(await decodeReco(m[1]))); }
+  history.replaceState(null, '', location.pathname + location.search);
+  if (m[1] === 'c') return handleCal(m[2]);
+  try { showIncoming(fromPayload(await decodeReco(m[2]))); }
   catch (e) { toast('⚠️ ' + t('Ce lien de reco est abîmé ou incomplet.')); }
+}
+// Un calendrier reçu est gardé tout de suite : on revient l'ouvrir chaque jour.
+// Reçu une 2e fois (version corrigée par l'autrice) : on remplace les morceaux, on garde les cases déjà ouvertes.
+async function handleCal(code) {
+  let c;
+  try { c = fromCalPayload(await decodeReco(code)); }
+  catch (e) { toast('⚠️ ' + t('Ce lien de calendrier est abîmé ou incomplet.')); return; }
+  const mine = cals.find(x => x.id === c.id);
+  if (mine && mine.dir === 'out') { toast(t('C’est ton calendrier.')); return showCalEdit(mine.id); }
+  if (mine) { Object.assign(mine, { from: c.from, year: c.year, note: c.note, days: c.days }); persistCals(); renderList(); toast('✓ ' + t('Calendrier mis à jour')); return showCalView(mine.id); }
+  Object.assign(c, { dir: 'in', opened: [], savedAt: new Date().toISOString() });
+  cals.push(c); persistCals(); renderList();
+  showCalView(c.id, { welcome: true });
 }
 window.addEventListener('hashchange', handleHash);
 
