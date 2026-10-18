@@ -1,818 +1,885 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FBF5EA">
-<meta name="referrer" content="no-referrer">
-<title>Corsia</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<title>Ascolta</title>
+<meta name="description" content="La musique qu’on se recommande">
+<meta name="theme-color" content="#0f0c29">
+<!-- Volontairement : ni manifest, ni service worker, ni apple-mobile-web-app-capable.
+     L'icône d'écran d'accueil s'ouvre ainsi dans Safari et partage les mêmes données
+     que les liens reçus par WhatsApp (leçon de Grazie). -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <style>
-  :root {
-    --creme: #FBF5EA; --carte: #FFFDF8; --bord: #E8DCC4; --bord-fort: #D9CBB0;
-    --encre: #2B2118; --doux: #5E5040; --ocre: #8F5A1B; --bleu: #1F4E6B; --bleu-pale: #E3EEF4;
-    --sable: #F1E6D3; --rouge: #9B2C1F;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--creme); color: var(--encre); }
-  body {
-    font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; font-size: 17px; line-height: 1.4;
-    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-    -webkit-text-size-adjust: 100%;
-  }
-  main { max-width: 520px; margin: 0 auto; padding: 0 16px 40px; }
-  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; margin: 0; }
-  h1 { font-size: 34px; color: var(--bleu); letter-spacing: -0.5px; }
-  h2 { font-size: 22px; }
-  h3 { font-size: 19px; }
-  .titre-ecran { font-size: 28px; color: var(--encre); }
-  p { margin: 0; }
-  .doux { color: var(--doux); }
-  button, input, select { font: inherit; color: inherit; }
-  button { cursor: pointer; }
-  a { color: var(--bleu); }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#0f0c29;overflow-x:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  color:#e2e8f0;font-size:16px;line-height:1.5;
+  min-height:100vh;min-height:100dvh;
+  padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));
+  overflow-wrap:anywhere;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid #c4b5fd;outline-offset:2px}
 
-  .entete { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 24px 4px 16px; }
-  .entete .sous { font-size: 16px; color: var(--doux); }
-  .retour { display: flex; align-items: center; gap: 4px; padding: 20px 0 8px; }
-  .retour button { background: none; border: none; color: var(--bleu); font-weight: 700; min-height: 46px; padding: 0 8px 0 0; display: flex; align-items: center; gap: 4px; }
+/* En-tête */
+.head{
+  background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+  padding:calc(20px + env(safe-area-inset-top,0px)) 20px 18px;
+  position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(0,0,0,.4);
+}
+.head h1{font-size:1.6em;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
+.head h1 .disc{width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle,#0f0c29 0 3px,#e2e8f0 3.5px 5px,#1e1b4b 5.5px 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.head p{font-size:.9em;opacity:.88}
+.menu-btn{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:16px;
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.15);color:#fff;font-size:20px;font-weight:700;line-height:1}
 
-  .pastille { width: 40px; height: 40px; border-radius: 50%; background: var(--sable); border: 2px solid var(--carte);
-              display: inline-flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
-  .pastille img { width: 32px; height: 32px; }
-  .pastille.grande { width: 52px; height: 52px; border-color: var(--bord); }
-  .pastille.grande img { width: 42px; height: 42px; }
-  .moi-btn { background: none; border: none; padding: 0; border-radius: 50%; }
+/* Filtres */
+.filters{padding:14px 20px;background:#1a1a2e;border-bottom:1px solid #2a2a4a}
+.search{width:100%;padding:11px 14px;border:2px solid #2a2a4a;border-radius:10px;background:#16213e;font-size:16px;margin-bottom:10px}
+.search:focus{outline:none;border-color:#8b5cf6}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:6px 13px;border-radius:20px;border:1px solid #2a2a4a;background:#16213e;color:#94a3b8;font-size:.88em}
+.chip.on{background:#8b5cf6;border-color:#8b5cf6;color:#fff}
 
-  .pile { display: flex; flex-direction: column; gap: 14px; }
-  .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .carte.mienne { border: 2px solid var(--bleu); }
-  .carte.annulee { background: transparent; border-style: dashed; }
-  .carte.annulee .quoi { color: var(--doux); text-decoration: line-through; text-decoration-thickness: 2px; }
-  .mention { display: inline-flex; align-self: flex-start; background: var(--sable); color: var(--encre); border-radius: 8px; padding: 4px 10px; font-weight: 700; font-size: 15px; }
-  .quand { font-size: 15px; color: var(--ocre); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
-  .quoi { font-size: 20px; font-weight: 700; }
-  .special { font-size: 14px; font-weight: 700; color: var(--bleu); background: var(--bleu-pale); border-radius: 6px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
-  .qui { display: flex; align-items: center; flex-wrap: wrap; gap: 0; }
-  .qui .pastille + .pastille { margin-left: -10px; }
-  .qui .noms { margin-left: 10px; color: var(--doux); font-size: 16px; }
-  .etat { display: flex; align-items: center; gap: 8px; color: var(--bleu); font-weight: 700; font-size: 16px; }
+/* Liste */
+.list{padding:16px 16px 0;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.card{position:relative;background:#16213e;border:1px solid #2a2a4a;border-radius:12px;
+  padding:14px 16px;text-align:left;width:100%;display:block}
+.card:active{background:#1e1e3f}
+.card .title{font-weight:700;font-size:1.05em;padding-right:86px;line-height:1.3}
+.card .artist{color:#c4b5fd;font-weight:600;font-size:.95em}
+.card .meta{color:#94a3b8;font-size:.85em;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.card .note{color:#cbd5e1;font-style:italic;font-size:.9em;margin-top:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{text-align:center;color:#94a3b8;padding:48px 24px;max-width:420px;margin:0 auto}
+.empty strong{display:block;color:#e2e8f0;font-size:1.1em;margin-bottom:6px}
 
-  .btn { min-height: 48px; border-radius: 12px; border: 1.5px solid var(--bleu); background: var(--carte); color: var(--bleu);
-         font-weight: 700; font-size: 17px; padding: 0 16px; }
-  .btn.plein { background: var(--bleu); color: #fff; border-color: var(--bleu); }
-  .btn.discret { border-color: var(--bord-fort); color: var(--encre); }
-  .btn.petit { min-height: 44px; font-size: 16px; padding: 0 12px; }
-  .btn:disabled { opacity: 0.5; }
-  .rangee { display: flex; gap: 10px; flex-wrap: wrap; }
-  .rangee .btn { flex: 1 1 140px; }
-  .btn.pause { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--ocre); border-color: var(--bord-fort); margin-top: 10px; }
-  .lien { background: none; border: none; color: var(--ocre); font-weight: 700; min-height: 44px; padding: 0 6px; display: inline-flex; align-items: center; gap: 8px; }
+/* L'étiquette de travers, comme sur un boîtier de CD */
+.sticker{position:absolute;top:12px;right:12px;padding:3px 10px 2px;border-radius:3px;
+  font-size:.74em;font-weight:800;letter-spacing:.02em;transform:rotate(5deg);
+  box-shadow:0 1px 0 rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.25);pointer-events:none}
+.sticker.in{background:#fb923c;color:#2a1203}
+.sticker.out{background:#60a5fa;color:#071a36;transform:rotate(-4deg)}
+.sticker.big{font-size:.85em;top:18px;right:18px}
 
-  .bascule { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--sable); border-radius: 14px; padding: 4px; }
-  .bascule button { min-height: 44px; border: none; border-radius: 11px; background: transparent; font-weight: 700; font-size: 16px; }
-  .bascule button[aria-pressed="true"] { background: var(--bleu); color: #fff; }
+.status-tag{color:#e2e8f0}
 
-  .reactions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .reaction { min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1.5px solid var(--bord-fort); background: var(--carte); font-weight: 700; font-size: 15px; }
-  .reaction[aria-pressed="true"] { border: 2px solid var(--bleu); background: var(--bleu-pale); color: var(--bleu); }
+/* Bouton + */
+.fab{position:fixed;right:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  width:60px;height:60px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:32px;line-height:1;
+  box-shadow:0 6px 20px rgba(139,92,246,.5);z-index:20}
 
-  label.champ { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
-  input[type=text], input[type=time], input[type=date], select {
-    min-height: 50px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--bord-fort); background: var(--carte); font-size: 18px; font-weight: 400; width: 100%;
-  }
-  /* Safari iOS : les champs date et heure imposent leur propre largeur. On les enferme dans un cadre
-     qui porte la bordure et coupe tout débordement. */
-  label.champ { min-width: 0; }
-  .boite { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-           min-height: 50px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--bord-fort);
-           background: var(--carte); overflow: hidden; min-width: 0; max-width: 100%; font-size: 18px; font-weight: 400; }
-  .boite .valeur { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .boite svg { flex: none; color: var(--doux); }
-  /* Le vrai champ est posé par-dessus, invisible : toucher le cadre ouvre le calendrier de l'iPhone. */
-  .boite input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: none;
-                 opacity: 0; -webkit-appearance: none; appearance: none; font-size: 16px; cursor: pointer; }
-  .boite input:focus-visible { outline: none; }
-  .boite:focus-within { outline: 3px solid #E8A23A; outline-offset: 2px; }
-  input::-webkit-date-and-time-value { text-align: left; }
-  input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid #E8A23A; outline-offset: 2px; }
+/* Fenêtres */
+.overlay{position:fixed;inset:0;background:rgba(5,4,20,.75);z-index:50;display:none;
+  align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{position:relative;background:#1a1a2e;border:1px solid #2a2a4a;border-bottom:none;
+  border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow-y:auto;
+  padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.overlay{align-items:center}.sheet{border-radius:18px;border-bottom:1px solid #2a2a4a}}
+.sheet h2{font-size:1.25em;margin-bottom:14px;padding-right:40px}
+.x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
+  border:1px solid #2a2a4a;background:#16213e;color:#94a3b8;font-size:16px}
+.sheet .x + .sticker.big{right:60px}
 
-  .grille-animaux { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .animal { min-height: 100px; border-radius: 16px; border: 1.5px solid var(--bord); background: var(--carte);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; }
-  .animal img { width: 56px; height: 56px; }
-  .animal span { font-size: 15px; font-weight: 700; }
-  .animal[aria-pressed="true"] { border: 3px solid var(--bleu); background: var(--bleu-pale); }
+label.f{display:block;font-size:.88em;color:#cbd5e1;margin:12px 0 5px;font-weight:600}
+.inp{width:100%;padding:11px 13px;border:2px solid #2a2a4a;border-radius:10px;background:#16213e;font-size:16px}
+.inp:focus{outline:none;border-color:#8b5cf6}
+textarea.inp{resize:vertical;min-height:70px}
+.hint{font-size:.8em;color:#94a3b8;margin-top:4px;display:flex;justify-content:space-between;gap:10px}
+.err{color:#fca5a5;font-size:.88em;margin-top:10px;min-height:1.2em}
 
-  .coche { display: flex; align-items: center; gap: 12px; min-height: 48px; font-weight: 700; }
-  .coche input { width: 26px; height: 26px; accent-color: var(--bleu); flex: none; }
-  .bloc-cours { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--bord); }
-  .bloc-cours:last-child { border-bottom: none; }
-  .bloc-cours .titre { font-weight: 700; }
-  .bloc-cours .detail { font-size: 15px; color: var(--doux); }
-  .outils { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-  .interruption { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--sable); border-radius: 10px; padding: 4px 4px 4px 12px; font-size: 15px; }
-  .formulaire { display: flex; flex-direction: column; gap: 10px; background: var(--sable); border-radius: 12px; padding: 12px; }
+.btn{display:block;width:100%;padding:13px;border-radius:12px;border:none;font-weight:700;font-size:1em;text-align:center;text-decoration:none}
+.btn.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+.btn.orange{background:#fb923c;color:#2a1203}
+.btn.ghost{background:#16213e;border:1px solid #2a2a4a;color:#e2e8f0}
+.btn.danger{background:transparent;border:1px solid #7f1d1d;color:#fca5a5}
+.btn + .btn,.row + .btn,.btn + .row{margin-top:10px}
+.row{display:flex;gap:10px}
+.row .btn{flex:1;margin-top:0}
 
-  .encadre { background: var(--sable); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-  .cle { font-family: ui-monospace, Menlo, monospace; font-size: 15px; overflow-wrap: anywhere; background: var(--carte); border-radius: 8px; padding: 10px; user-select: all; }
-  .message { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%);
-             background: var(--encre); color: #fff; padding: 12px 18px; border-radius: 14px; max-width: 90vw; font-size: 16px; z-index: 10; }
-  .vide { text-align: center; padding: 30px 10px; color: var(--doux); }
-  .pied { margin-top: 28px; font-size: 14px; color: var(--doux); text-align: center; }
-  [hidden] { display: none !important; }
+/* Fiche */
+.fiche .ttl{font-size:1.4em;font-weight:800;line-height:1.25;padding-right:96px}
+.fiche .art{color:#c4b5fd;font-weight:700;font-size:1.1em;margin-top:2px}
+.fiche .by{color:#94a3b8;font-size:.9em;margin-top:8px}
+.fiche .mot{margin-top:14px;padding:12px 14px;background:#16213e;border-left:3px solid #8b5cf6;border-radius:0 10px 10px 0;font-style:italic;color:#e2e8f0}
+.listen{margin-top:18px}
+.listen .btn{margin-top:10px}
+.pick-title{font-weight:700;margin-bottom:4px}
+.pick-sub{font-size:.85em;color:#94a3b8;margin-bottom:10px}
+.plats{display:flex;flex-wrap:wrap;gap:8px}
+.plat{padding:8px 12px;border-radius:20px;border:1px solid #2a2a4a;background:#16213e;font-size:.9em}
+.plat.on{border-color:#8b5cf6;background:#2e1f5e}
+details.others{margin-top:12px;background:#16213e;border:1px solid #2a2a4a;border-radius:10px;padding:10px 14px}
+details.others summary{cursor:pointer;color:#cbd5e1;font-size:.92em}
+details.others ul{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:2px}
+details.others a{color:#c4b5fd;text-decoration:none;display:block;padding:6px 0}
+.seg{display:flex;gap:6px;margin-top:18px;background:#16213e;border:1px solid #2a2a4a;border-radius:12px;padding:4px}
+.seg button{flex:1;padding:9px 4px;border:none;border-radius:9px;background:transparent;color:#94a3b8;font-size:.88em;font-weight:600}
+.seg button.on{background:#8b5cf6;color:#fff}
+.actions{margin-top:20px}
+.invite{margin-top:18px;padding:14px;border-radius:12px;border:1px dashed #fb923c;background:rgba(251,146,60,.08)}
+.invite strong{display:block;margin-bottom:4px}
+.invite p{font-size:.9em;color:#cbd5e1}
+.invite p + p{margin-top:6px}
+
+/* Réglages */
+.set h3{font-size:.95em;color:#cbd5e1;margin:18px 0 8px}
+.set .about{font-size:.85em;color:#94a3b8;margin-top:20px}
+.lang{display:flex;gap:8px}
+.lang button{flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a4a;background:#16213e;font-weight:700}
+.lang button.on{background:#8b5cf6;border-color:#8b5cf6;color:#fff}
+
+/* Calendrier de l'Avent */
+.sticker.cal{background:#f43f5e;color:#fff;transform:rotate(-3deg)}
+.cal-sub{font-size:.9em;color:#cbd5e1}
+.cal-count{font-size:.85em;color:#94a3b8;margin-top:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 4px}
+@media (min-width:520px){.cal-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.cday{aspect-ratio:1;min-width:0;border-radius:12px;border:1px solid #2a2a4a;background:#16213e;color:#e2e8f0;
+  font-weight:800;font-size:1.3em;line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cday small{font-size:.5em;font-weight:600;opacity:.85}
+.cday.open{background:linear-gradient(135deg,#f43f5e,#fb923c);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(244,63,94,.35)}
+.cday.seen{background:#2e1f5e;border-color:#4c3a8a;color:#c4b5fd}
+.cday.locked{color:#475569;cursor:default}
+.cday.filled{border-color:#22c55e;background:rgba(34,197,94,.1);color:#bbf7d0}
+.cday.blank{border-style:dashed;color:#64748b}
+.cday.today{outline:2px solid #fde047;outline-offset:2px}
+.fiche .cal-date{color:#fb923c;font-weight:800;font-size:.85em;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px;padding-right:40px}
+.fiche.day .ttl{padding-right:0}
+
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:#8b5cf6;color:#fff;padding:11px 18px;border-radius:24px;font-weight:600;font-size:.92em;
+  z-index:100;box-shadow:0 8px 24px rgba(139,92,246,.45);max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 </style>
 </head>
 <body>
-<main id="app" aria-live="polite"></main>
-<div id="message" class="message" role="status" hidden></div>
+
+<header class="head">
+  <h1><span class="disc" aria-hidden="true"></span>Ascolta</h1>
+  <p id="tagline"></p>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">⋯</button>
+</header>
+
+<div class="filters">
+  <input class="search" id="search" type="search" autocomplete="off">
+  <div class="chips" id="chips"></div>
+</div>
+
+<main class="list" id="list"></main>
+
+<button class="fab" id="fab">+</button>
+
+<div class="overlay" id="ov"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 
 <script>
-(() => {
-  'use strict';
+'use strict';
+// ============ LANGUE : le français est la base, l'anglais un dictionnaire de différences ============
+const NB = '\u202F';
+const EN = {
+  'La musique qu’on se recommande': 'Music we recommend to each other',
+  'Rechercher': 'Search',
+  'Tout': 'All', 'Reçues': 'Received', 'Envoyées': 'Sent',
+  'À écouter': 'To listen', 'Écoutée': 'Listened', 'Coup de cœur': 'Favourite',
+  'Reçue': 'Received', 'Envoyée': 'Sent',
+  'Aucune reco pour l’instant.': 'No recommendations yet.',
+  'Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.': 'Share a track with the + button, or open a link someone sent you.',
+  'Aucune reco ne correspond.': 'No recommendations match.',
+  'de {name}': 'from {name}',
+  'Partager un morceau': 'Share a track',
+  'Artiste': 'Artist', 'Titre ou album': 'Title or album',
+  'Lien (facultatif)': 'Link (optional)',
+  'Colle le lien de ta plateforme, si tu en as un.': 'Paste the link from your platform, if you have one.',
+  'Artiste et titre repris du message. Vérifie-les.': 'Artist and title taken from the message. Check them.',
+  'Recherche de l’artiste et du titre chez Deezer…': 'Looking up artist and title on Deezer…',
+  'Deezer n’a pas répondu : indique l’artiste et le titre.': 'Deezer didn’t answer: enter the artist and title.',
+  'Artiste et titre repris de Deezer. Vérifie-les.': 'Artist and title taken from Deezer. Check them.',
+  'Artiste et titre repris du message. Vérifie-les. Le lien court de Deezer n’est pas gardé : ton destinataire passera par la recherche.': 'Artist and title taken from the message. Check them. Deezer’s short link isn’t kept: your recipient will go through search.',
+  'Ton mot (facultatif)': 'Your note (optional)',
+  ['Pourquoi ce morceau' + NB + '?']: 'Why this track?',
+  'Ton prénom': 'Your first name',
+  'Partager': 'Share', 'Annuler': 'Cancel', 'Fermer': 'Close',
+  'Indique l’artiste et le titre.': 'Enter the artist and the title.',
+  'Indique ton prénom.': 'Enter your first name.',
+  'Ce lien ne ressemble pas à une adresse web.': 'This link doesn’t look like a web address.',
+  'Lien copié': 'Link copied',
+  ['Copie ce lien' + NB + ':']: 'Copy this link:',
+  'Écouter sur {p}': 'Listen on {p}',
+  'Chercher sur {p}': 'Search on {p}',
+  'Ouvrir le lien toutes plateformes': 'Open the all-platforms link',
+  'Ouvrir le lien d’origine ({p})': 'Open the original link ({p})',
+  'Ouvrir le lien d’origine': 'Open the original link',
+  'Autres plateformes': 'Other platforms',
+  ['Tu écoutes sur quelle plateforme' + NB + '?']: 'Which platform do you listen on?',
+  'Tu pourras la changer dans le menu.': 'You can change it in the menu.',
+  'Recommandé par {name}, le {date}': 'Recommended by {name} on {date}',
+  'Envoyée le {date}': 'Sent on {date}',
+  'Faire suivre': 'Pass it on',
+  'Supprimer': 'Delete',
+  ['Supprimer cette reco' + NB + '?']: 'Delete this recommendation?',
+  'Ajouter à ma liste': 'Add to my list',
+  'Déjà dans ta liste': 'Already in your list',
+  'C’est une reco que tu as envoyée.': 'This is a recommendation you sent.',
+  'Ajoutée à ta liste': 'Added to your list',
+  'Ce lien de reco est abîmé ou incomplet.': 'This recommendation link is damaged or incomplete.',
+  'Garde tes recos': 'Keep your recommendations',
+  'Ajoute Ascolta à ton écran d’accueil pour retrouver cette reco et partager les tiennes.': 'Add Ascolta to your home screen to find this one again and share your own.',
+  ['Touche le bouton Partager de Safari, puis «' + NB + 'Sur l’écran d’accueil' + NB + '».']: 'Tap Safari’s Share button, then “Add to Home Screen”.',
+  ['Ouvre le menu ⋮ du navigateur, puis «' + NB + 'Ajouter à l’écran d’accueil' + NB + '».']: 'Open the browser menu ⋮, then “Add to Home screen”.',
+  'Réglages': 'Settings', 'Langue': 'Language', 'Ma plateforme': 'My platform', 'Aucune': 'None',
+  'Mon prénom': 'My first name', 'Sauvegarde': 'Backup',
+  'Exporter mes recos': 'Export my recommendations',
+  'Importer une sauvegarde': 'Import a backup',
+  'Tout effacer': 'Erase everything',
+  ['Effacer toutes tes recos' + NB + '? Pense à exporter d’abord.']: 'Erase all your recommendations? Export them first.',
+  '{n} recos importées': '{n} recommendations imported',
+  'Fichier illisible': 'Unreadable file',
+  ['Aucun serveur' + NB + ': tes recos restent sur cet appareil et dans les liens que tu envoies.']: 'No server: your recommendations stay on this device and in the links you send.',
+  ['«' + NB + '{n}' + NB + '»']: '“{n}”',
+  ['Écoute sur ta plateforme' + NB + ':']: 'Listen on your platform:',
+  // Calendrier de l'Avent
+  'Calendrier de l’Avent': 'Advent calendar', 'Avent': 'Advent',
+  'Créer mon calendrier de l’Avent': 'Create my Advent calendar',
+  'Ouvrir mon calendrier de l’Avent': 'Open my Advent calendar',
+  'Mon calendrier de l’Avent {y}': 'My Advent calendar {y}',
+  'Calendrier de l’Avent de {name}': '{name}’s Advent calendar',
+  '{n}/24 cases remplies': '{n}/24 doors filled',
+  'Une case par jour, du 1er au 24 décembre. Touche une case pour choisir son morceau.': 'One door a day, from 1 to 24 December. Tap a door to choose its track.',
+  'Ton mot d’accueil (facultatif)': 'Your welcome note (optional)',
+  'Partager le calendrier': 'Share the calendar',
+  'Aperçu': 'Preview',
+  'Supprimer le calendrier': 'Delete the calendar',
+  ['Supprimer ce calendrier' + NB + '?']: 'Delete this calendar?',
+  'Case du {d} décembre': 'December {d}',
+  'Enregistrer la case': 'Save this door',
+  'Vider la case': 'Empty this door',
+  ['Il manque {n} case(s). Partager quand même' + NB + '?']: '{n} door(s) still empty. Share anyway?',
+  'Mon calendrier de l’Avent musical': 'My musical Advent calendar',
+  'Un morceau par jour, du 1er au 24 décembre.': 'One track a day, from 1 to 24 December.',
+  ['Ouvre-le ici' + NB + ':']: 'Open it here:',
+  'Première case le 1er décembre.': 'First door opens on 1 December.',
+  '{n} case à ouvrir': '{n} door to open', '{n} cases à ouvrir': '{n} doors to open',
+  'Toutes les cases sont ouvertes.': 'All doors are open.',
+  'Prochaine case demain.': 'Next door tomorrow.',
+  '{d} décembre': 'December {d}',
+  'Retour au calendrier': 'Back to the calendar',
+  'Tu vois le calendrier comme tes proches le verront, case par case.': 'You see the calendar as your recipients will, door by door.',
+  'Garde ton calendrier': 'Keep your calendar',
+  'Ajoute Ascolta à ton écran d’accueil pour ouvrir une case chaque jour.': 'Add Ascolta to your home screen to open a door every day.',
+  'Ce lien de calendrier est abîmé ou incomplet.': 'This calendar link is damaged or incomplete.',
+  'C’est ton calendrier.': 'This is your calendar.',
+  'Calendrier mis à jour': 'Calendar updated',
+  'Retirer ce calendrier': 'Remove this calendar',
+  ['Retirer ce calendrier de cet appareil' + NB + '?']: 'Remove this calendar from this device?',
+  'Case enregistrée': 'Door saved',
+  'Nouveau calendrier de l’Avent': 'New Advent calendar',
+  'Calendrier pour {who}': 'Calendar for {who}',
+  ['Pour qui' + NB + '? (visible par toi seule)']: 'For whom? (only you see this)',
+  'Maman, les copines…': 'Mum, the girls…',
+  'Dupliquer': 'Duplicate',
+  '{l} (copie)': '{l} (copy)',
+  'Copie créée : change ce qui doit l’être, puis partage-la.': 'Copy created: change what you need, then share it.',
+};
+let lang = load('ascolta.lang', null) || ((navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en');
+function t(fr, vars) {
+  let s = (lang === 'en' && EN[fr] !== undefined) ? EN[fr] : fr;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
 
-  /* ================= Réglages ================= */
-  const API = 'https://azertida.alwaysdata.net/corsia/api.php';
-  const FENETRE = 7;               // jours où Corsia t'inscrit selon tes habitudes
-  const P = 'corsia.';             // préfixe du stockage local (même origine que les autres applis)
-  const NB = ' ';             // espace fine insécable avant ? ! : ;
+// ============ STOCKAGE (clés préfixées : toutes les applis partagent azertida.github.io) ============
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('⚠️ ' + e.message); } }
+let recos = load('ascolta.recos', []);
+if (!Array.isArray(recos)) recos = [];
+let myPlatform = load('ascolta.platform', null);
+let myName = load('ascolta.name', '');
+function persist() { save('ascolta.recos', recos); }
 
-  const ANIMAUX = [
-    ['poulpe', 'Poulpe'], ['capybara', 'Capybara'], ['loutre', 'Loutre'], ['tortue', 'Tortue'],
-    ['meduse', 'Méduse'], ['dauphin', 'Dauphin'], ['phoque', 'Phoque'], ['manchot', 'Manchot'],
-    ['baleine', 'Baleine'], ['grenouille', 'Grenouille'], ['poisson-globe', 'Poisson-globe'], ['crabe', 'Crabe'],
-  ];
-  const FOND = { poulpe: '#FBE3DA', capybara: '#F3E6D6', loutre: '#F3E6D6', tortue: '#E2EEDA', meduse: '#EEE5F7',
-                 dauphin: '#E3EEF4', phoque: '#E9ECEF', manchot: '#E9ECEF', baleine: '#E3EEF4', grenouille: '#E2EEDA',
-                 'poisson-globe': '#FBEFD5', crabe: '#FBE3DA', raie: '#E3EEF4', hippocampe: '#FBEFD5' };
-  const REACTIONS = [['hate', '🙌', 'J’ai hâte'], ['retard', '⏰', 'Un peu en retard'], ['peutetre', '🤷', 'Peut-être pas']];
-  const JOURS = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+// ============ PLATEFORMES : lien direct si c'est celle de l'auteur, sinon recherche ============
+const PLATFORMS = [
+  { id: 'spotify', name: 'Spotify', hosts: ['open.spotify.com', 'spotify.link', 'spotify.com'], s: q => 'https://open.spotify.com/search/' + q },
+  { id: 'apple', name: 'Apple Music', hosts: ['music.apple.com', 'itunes.apple.com'], s: q => 'https://music.apple.com/search?term=' + q },
+  { id: 'deezer', name: 'Deezer', hosts: ['deezer.com', 'deezer.page.link', 'dzr.page.link'], s: q => 'https://www.deezer.com/search/' + q },
+  { id: 'qobuz', name: 'Qobuz', hosts: ['qobuz.com'], s: q => 'https://www.qobuz.com/' + (lang === 'en' ? 'gb-en' : 'be-fr') + '/search?q=' + q },
+  { id: 'ytmusic', name: 'YouTube Music', hosts: ['music.youtube.com'], s: q => 'https://music.youtube.com/search?q=' + q },
+  { id: 'youtube', name: 'YouTube', hosts: ['youtube.com', 'youtu.be'], s: q => 'https://www.youtube.com/results?search_query=' + q },
+  { id: 'tidal', name: 'Tidal', hosts: ['tidal.com'], s: q => 'https://tidal.com/search?q=' + q },
+  { id: 'amazon', name: 'Amazon Music', hosts: ['music.amazon.com', 'music.amazon.fr', 'music.amazon.de', 'music.amazon.co.uk', 'amazon.com', 'amazon.fr'], s: q => 'https://music.amazon.com/search/' + q },
+  { id: 'soundcloud', name: 'SoundCloud', hosts: ['soundcloud.com'], s: q => 'https://soundcloud.com/search?q=' + q },
+  { id: 'bandcamp', name: 'Bandcamp', hosts: ['bandcamp.com'], s: q => 'https://bandcamp.com/search?q=' + q },
+];
+const GENERIC_HOSTS = ['song.link', 'album.link', 'odesli.co', 'lnk.to', 'linktr.ee'];
+function hostMatch(host, list) { return list.some(h => host === h || host.endsWith('.' + h)); }
+function detect(url) {
+  if (!url) return null;
+  let host; try { host = new URL(url).hostname.toLowerCase(); } catch (e) { return null; }
+  if (hostMatch(host, GENERIC_HOSTS)) return 'generic';
+  const p = PLATFORMS.find(p => hostMatch(host, p.hosts));
+  return p ? p.id : 'other';
+}
+function plat(id) { return PLATFORMS.find(p => p.id === id); }
+// Lien court de Deezer : ne s'ouvre pas hors de Deezer, et pas de façon fiable -> ignoré
+function deadLink(u) { try { return new URL(u).hostname.toLowerCase() === 'link.deezer.com'; } catch (e) { return false; } }
+function usableUrl(r) { return r.url && !deadLink(r.url) ? r.url : ''; }
+function linkFor(r, pid) {
+  const u = usableUrl(r);
+  if (u && detect(u) === pid) return { href: u, direct: true };
+  return { href: plat(pid).s(encodeURIComponent(r.artist + ' ' + r.title)), direct: false };
+}
+function safeUrl(u) {
+  if (!u) return '';
+  const dz = deezerRef(u);
+  if (dz) return 'https://www.deezer.com/' + dz.type + '/' + dz.id;
+  try { const x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : ''; } catch (e) { return ''; }
+}
+// Raccourcit les liens : retire les paramètres de suivi (host, utm, si…) là où ils ne servent à rien
+function cleanUrl(u) {
+  const dz = deezerRef(u);
+  if (dz) return 'https://www.deezer.com/' + dz.type + '/' + dz.id;
+  try {
+    const x = new URL(u), h = x.hostname.replace(/^www\./, '');
+    if (/(^|\.)spotify\.com$|(^|\.)tidal\.com$|(^|\.)qobuz\.com$|(^|\.)bandcamp\.com$|(^|\.)soundcloud\.com$/.test(h)) { x.search = ''; x.hash = ''; return x.href; }
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'si', 'feature', 'ls'].forEach(k => x.searchParams.delete(k));
+    return x.href;
+  } catch (e) { return u; }
+}
+// Lien Deezer long : https://www.deezer.com/fr/album/1027942262?host=… -> { type: 'album', id: '1027942262' }
+function deezerRef(u) {
+  const m = String(u || '').match(/^https?:\/\/(?:www\.)?deezer\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(album|track)\/(\d+)/i);
+  return m ? { type: m[1].toLowerCase(), id: m[2] } : null;
+}
+// Demande l'artiste et le titre à l'API publique de Deezer (JSONP : Deezer n'autorise pas les appels directs depuis un site)
+function deezerLookup(ref) {
+  return new Promise(resolve => {
+    const cb = 'ascoltaDz' + Date.now() + Math.floor(Math.random() * 1000), sc = document.createElement('script');
+    const done = v => { clearTimeout(timer); delete window[cb]; sc.remove(); resolve(v); };
+    const timer = setTimeout(() => done(null), 8000);
+    window[cb] = d => done(d && !d.error && d.title && d.artist && d.artist.name ? { title: d.title, artist: d.artist.name } : null);
+    sc.onerror = () => done(null);
+    sc.src = 'https://api.deezer.com/' + ref.type + '/' + ref.id + '?output=jsonp&callback=' + cb;
+    document.head.appendChild(sc);
+  });
+}
 
-  /* ================= Stockage local ================= */
-  const lire = (k, def) => { try { const v = localStorage.getItem(P + k); return v === null ? def : JSON.parse(v); } catch { return def; } };
-  const ecrire = (k, v) => { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch {} };
-  const oublier = (k) => { try { localStorage.removeItem(P + k); } catch {} };
+// ============ LIEN AUTOPORTEUR : JSON compressé (deflate-raw) dans le fragment d'adresse ============
+function b64u(bytes) { let s = ''; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64u(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; const bin = atob(str); return Uint8Array.from(bin, c => c.charCodeAt(0)); }
+async function pipe(bytes, Stream) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new Stream('deflate-raw'))).arrayBuffer()); }
+async function encodeReco(obj) {
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream !== 'undefined') { try { return 'z' + b64u(await pipe(raw, CompressionStream)); } catch (e) {} }
+  return 'j' + b64u(raw);
+}
+async function decodeReco(code) {
+  const kind = code[0], bytes = unb64u(code.slice(1));
+  const raw = kind === 'z' ? await pipe(bytes, DecompressionStream) : kind === 'j' ? bytes : null;
+  if (!raw) throw new Error('format');
+  return JSON.parse(new TextDecoder().decode(raw));
+}
+// Charge utile : v=version, i=id, a=artiste, t=titre, n=mot, f=prénom, d=date, u=lien
+function toPayload(r) { const o = { v: 1, i: r.id, a: r.artist, t: r.title, f: r.from, d: r.date }; if (r.note) o.n = r.note; if (r.url) o.u = r.url; return o; }
+function fromPayload(o) {
+  const str = (x, max) => typeof x === 'string' ? x.trim().slice(0, max) : '';
+  const r = { id: str(o.i, 40), artist: str(o.a, 120), title: str(o.t, 160), note: str(o.n, NOTE_MAX), from: str(o.f, 40), date: /^\d{4}-\d{2}-\d{2}$/.test(o.d) ? o.d : today(), url: safeUrl(str(o.u, 600)) };
+  if (!r.id || !r.artist || !r.title) throw new Error('champs');
+  return r;
+}
+const NOTE_MAX = 120;
 
-  let cercle = lire('cercle', null);          // { c, admin?, nom }
-  let profil = lire('profil', null);          // { surnom, animal }
-  let habitudes = lire('habitudes', []);      // [ idCours ]
-  let miennes = lire('miennes', {});          // { "idCours|date": { id, jeton, source } }
-  let absences = lire('absences', {});        // { "idCours|date": true } = « pas cette fois »
-  let donnees = null;                         // réponse du serveur
-  let ecran = 'semaine';
-  let ouvert = null;                          // formulaire d'interruption ouvert (id du cours, ou 'club')
+// ============ OUTILS ============
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fmtDate(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number); const dt = new Date(y, m - 1, d);
+  const o = { day: 'numeric', month: 'long' }; if (y !== new Date().getFullYear()) o.year = 'numeric';
+  return dt.toLocaleDateString(lang === 'en' ? 'en-GB' : 'fr-BE', o);
+}
+function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 2600); }
+const $ = id => document.getElementById(id);
+const STATUSES = [['todo', 'À écouter'], ['done', 'Écoutée'], ['love', 'Coup de cœur']];
+const STATUS_ICON = { todo: '⏳', done: '✓', love: '♥' };
 
-  /* ================= Outils ================= */
-  const $app = document.getElementById('app');
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const versDate = (s) => { const [a, m, j] = s.split('-').map(Number); return new Date(a, m - 1, j); };
-  const jourIso = (d) => ((d.getDay() + 6) % 7) + 1;
-  const ecartJours = (a, b) => Math.round((versDate(b) - versDate(a)) / 864e5);
-  const heureFr = (h) => h.replace(':', ' h ').replace(/ h 00$/, ' h');
-  const cle = (cours, date) => `${cours}|${date}`;
-  const aujourdhui = () => iso(new Date());
-  const premier = (t) => t.replace(/(^|\s)1(\s)/, '$11er$2');   // « 1er décembre »
-  const dateCourte = (s) => premier(new Intl.DateTimeFormat('fr-BE', { day: 'numeric', month: 'long' }).format(versDate(s)));
-  const dateMoyenne = (s) => premier(new Intl.DateTimeFormat('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }).format(versDate(s)));
-
-  function dateFr(dateIso) {
-    if (dateIso === aujourdhui()) return 'Aujourd’hui';
-    if (dateIso === iso(new Date(Date.now() + 864e5))) return 'Demain';
-    return premier(new Intl.DateTimeFormat('fr-BE', { weekday: 'long', day: 'numeric', month: 'short' }).format(versDate(dateIso)));
+// ============ CALENDRIER DE L'AVENT : 24 morceaux dans un seul lien, une case par jour ============
+const DAYS = 24, CAL_NOTE_MAX = 200;
+let cals = load('ascolta.cals', []);
+if (!Array.isArray(cals)) cals = [];
+function persistCals() { save('ascolta.cals', cals); }
+// Pour tester : ?date=2026-12-05 fait comme si on était ce jour-là (n'agit que sur l'ouverture des cases)
+const DATE_TEST = (() => { const d = new URLSearchParams(location.search).get('date') || ''; return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null; })();
+function calToday() { return DATE_TEST || today(); } // date LOCALE, jamais UTC
+function dayKey(y, d) { return y + '-12-' + String(d).padStart(2, '0'); }
+function dayOpen(c, d, preview) { return (c.dir === 'out' && !preview) || calToday() >= dayKey(c.year, d); }
+function filledCount(c) { return c.days.filter(Boolean).length; }
+function calYear() { const n = new Date(); return n.getMonth() === 11 && n.getDate() > 24 ? n.getFullYear() + 1 : n.getFullYear(); }
+// Charge utile : k='c', i=id, f=prénom, y=année, m=mot d'accueil, d=24 cases [artiste, titre, mot?, lien?] ou 0
+function toCalPayload(c) {
+  const o = { v: 1, k: 'c', i: c.id, f: (c.from || '').trim(), y: c.year,
+    d: c.days.map(x => !x ? 0 : x.url ? [x.artist, x.title, x.note || '', x.url] : x.note ? [x.artist, x.title, x.note] : [x.artist, x.title]) };
+  if ((c.note || '').trim()) o.m = c.note.trim();
+  return o;
+}
+function fromCalPayload(o) {
+  const str = (x, max) => typeof x === 'string' ? x.trim().slice(0, max) : '';
+  if (!o || o.k !== 'c' || !Array.isArray(o.d)) throw new Error('format');
+  const y = Number(o.y);
+  const c = { id: str(o.i, 40), from: str(o.f, 40), year: Number.isInteger(y) && y >= 2020 && y <= 2100 ? y : calYear(), note: str(o.m, CAL_NOTE_MAX), days: [] };
+  for (let i = 0; i < DAYS; i++) {
+    const x = o.d[i];
+    c.days.push(Array.isArray(x) && str(x[0], 120) && str(x[1], 160)
+      ? { artist: str(x[0], 120), title: str(x[1], 160), note: str(x[2], NOTE_MAX), url: safeUrl(str(x[3], 600)) } : null);
   }
-
-  function rythmeFr(c) {
-    if (c.rythme === 0) return `${dateMoyenne(c.ref)}, ${heureFr(c.heure)} · séance unique`;
-    if (c.rythme === 2) return `${JOURS[c.jour]} ${heureFr(c.heure)} · une semaine sur deux${c.ref > aujourdhui() ? `, à partir du ${dateCourte(c.ref)}` : ''}`;
-    return `chaque ${JOURS[c.jour]}, ${heureFr(c.heure)}`;
+  if (!c.id) throw new Error('champs');
+  return c;
+}
+function calTitle(c) { return c.dir === 'out' ? ((c.label || '').trim() ? t('Calendrier pour {who}', { who: c.label.trim() }) : t('Mon calendrier de l’Avent {y}', { y: c.year })) : t('Calendrier de l’Avent de {name}', { name: c.from || '?' }); }
+function calStatus(c, preview) {
+  if (c.dir === 'out' && !preview) return t('{n}/24 cases remplies', { n: filledCount(c) });
+  const now = calToday(), seen = preview ? [] : (c.opened || []);
+  if (now < dayKey(c.year, 1)) return t('Première case le 1er décembre.');
+  let n = 0;
+  for (let d = 1; d <= DAYS; d++) if (dayOpen(c, d, preview) && c.days[d - 1] && !seen.includes(d)) n++;
+  if (n) return t(n > 1 ? '{n} cases à ouvrir' : '{n} case à ouvrir', { n });
+  return t(now >= dayKey(c.year, DAYS) ? 'Toutes les cases sont ouvertes.' : 'Prochaine case demain.');
+}
+function calGrid(c, mode) { // mode : 'edit' (l'autrice remplit) | 'view' (destinataire) | 'preview' (l'autrice voit comme ses proches)
+  const now = calToday(), seen = mode === 'view' ? (c.opened || []) : [];
+  let html = '<div class="cal-grid">';
+  for (let d = 1; d <= DAYS; d++) {
+    const x = c.days[d - 1], isToday = now === dayKey(c.year, d) ? ' today' : '';
+    if (mode === 'edit') { html += `<button class="cday ${x ? 'filled' : 'blank'}${isToday}" data-act="cday" data-d="${d}">${d}<small>${x ? '♪' : '+'}</small></button>`; continue; }
+    if (!dayOpen(c, d, mode === 'preview')) html += `<button class="cday locked${isToday}" disabled>${d}<small>🔒</small></button>`;
+    else if (!x) html += `<button class="cday locked${isToday}" disabled>${d}<small>·</small></button>`;
+    else html += `<button class="cday ${seen.includes(d) ? 'seen' : 'open'}${isToday}" data-act="copen" data-d="${d}">${d}<small>${seen.includes(d) ? '♪' : '🎁'}</small></button>`;
   }
+  return html + '</div>';
+}
+function startCal() {
+  const c = { id: newId(), dir: 'out', label: '', from: myName, year: calYear(), note: '', days: Array(DAYS).fill(null), savedAt: new Date().toISOString() };
+  cals.push(c); persistCals(); renderList(); showCalEdit(c.id, true);
+}
+// Dupliquer : mêmes cases, même mot, nouvel identifiant (donc un lien indépendant)
+function dupCal(src) {
+  const c = JSON.parse(JSON.stringify(src));
+  Object.assign(c, { id: newId(), label: (src.label || '').trim() ? t('{l} (copie)', { l: src.label.trim() }) : '', savedAt: new Date().toISOString() });
+  cals.push(c); persistCals(); renderList(); showCalEdit(c.id, true); toast(t('Copie créée : change ce qui doit l’être, puis partage-la.'));
+}
 
-  function pastille(animal, grande = false) {
-    const id = FOND[animal] ? animal : 'poulpe';
-    return `<span class="pastille${grande ? ' grande' : ''}" style="background:${FOND[id]}"><img src="animaux/${id}.png" alt=""></span>`;
+// ============ LISTE ============
+let filter = 'all';
+const FILTERS = [['all', 'Tout'], ['in', 'Reçues'], ['out', 'Envoyées'], ['todo', 'À écouter'], ['love', 'Coup de cœur']];
+function renderChrome() {
+  document.documentElement.lang = lang;
+  $('tagline').textContent = t('La musique qu’on se recommande');
+  $('search').placeholder = '🔍 ' + t('Rechercher');
+  $('fab').setAttribute('aria-label', t('Partager un morceau'));
+  $('chips').innerHTML = FILTERS.map(([k, l]) => `<button class="chip${filter === k ? ' on' : ''}" data-f="${k}">${esc(t(l))}</button>`).join('');
+}
+function sticker(r, big) { return `<span class="sticker ${r.dir}${big ? ' big' : ''}">${esc(t(r.dir === 'in' ? 'Reçue' : 'Envoyée'))}</span>`; }
+function renderList() {
+  const q = $('search').value.trim().toLowerCase();
+  let items = recos.slice().sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+  if (filter === 'in' || filter === 'out') items = items.filter(r => r.dir === filter);
+  if (filter === 'todo' || filter === 'love') items = items.filter(r => r.dir === 'in' && r.status === filter);
+  if (q) items = items.filter(r => [r.artist, r.title, r.note, r.from].join(' ').toLowerCase().includes(q));
+  const list = $('list');
+  let shownCals = filter === 'all' ? cals.slice().sort((a, b) => b.year - a.year || (a.dir === 'out' ? -1 : 1)) : [];
+  if (q) shownCals = shownCals.filter(c => [calTitle(c), c.from, t('Calendrier de l’Avent')].join(' ').toLowerCase().includes(q));
+  if (!recos.length && !cals.length) { list.innerHTML = `<div class="empty"><strong>${esc(t('Aucune reco pour l’instant.'))}</strong>${esc(t('Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.'))}</div>`; return; }
+  if (!items.length && !shownCals.length) { list.innerHTML = `<div class="empty">${esc(t('Aucune reco ne correspond.'))}</div>`; return; }
+  list.innerHTML = shownCals.map(c => `<button class="card" data-cal="${esc(c.id)}"><span class="sticker cal">🎄 ${esc(t('Avent'))}</span>
+      <div class="title">${esc(calTitle(c))}</div><div class="meta"><span>${esc(calStatus(c))}</span></div></button>`).join('') + items.map(r => {
+    const meta = [];
+    if (r.dir === 'in') meta.push(esc(t('de {name}', { name: r.from })));
+    meta.push(esc(fmtDate(r.date)));
+    if (r.dir === 'in') { const st = STATUSES.find(s => s[0] === r.status) || STATUSES[0]; meta.push(`<span class="status-tag">${STATUS_ICON[st[0]]} ${esc(t(st[1]))}</span>`); }
+    return `<button class="card" data-id="${esc(r.id)}">${sticker(r)}
+      <div class="title">${esc(r.title)}</div><div class="artist">${esc(r.artist)}</div>
+      <div class="meta">${meta.map(m => `<span>${m}</span>`).join('')}</div>
+      ${r.note ? `<div class="note">${esc(t('«' + NB + '{n}' + NB + '»', { n: r.note }))}</div>` : ''}</button>`;
+  }).join('');
+}
+function renderAll() { renderChrome(); renderList(); }
+
+// ============ FENÊTRES ============
+let sheetState = null;
+function openSheet(html, state) { sheetState = state || null; $('sheet').innerHTML = `<button class="x" data-act="close" aria-label="${esc(t('Fermer'))}">✕</button>` + html; $('ov').classList.add('open'); $('sheet').scrollTop = 0; }
+function closeSheet() { $('ov').classList.remove('open'); sheetState = null; }
+
+// ----- Fiche (reco de la liste, ou reco reçue par lien) -----
+function listenBlock(r) {
+  if (!myPlatform) {
+    return `<div class="listen"><div class="pick-title">${esc(t('Tu écoutes sur quelle plateforme' + NB + '?'))}</div>
+      <div class="pick-sub">${esc(t('Tu pourras la changer dans le menu.'))}</div>
+      <div class="plats">${PLATFORMS.map(p => `<button class="plat" data-act="pick" data-p="${p.id}">${esc(p.name)}</button>`).join('')}</div></div>`;
   }
-
-  let minuterie;
-  function dire(texte) {
-    const m = document.getElementById('message');
-    m.textContent = texte; m.hidden = false;
-    clearTimeout(minuterie); minuterie = setTimeout(() => { m.hidden = true; }, 3500);
+  const main = linkFor(r, myPlatform), P = plat(myPlatform);
+  let html = `<div class="listen"><a class="btn primary" href="${esc(main.href)}" target="_blank" rel="noopener">▶ ${esc(t(main.direct ? 'Écouter sur {p}' : 'Chercher sur {p}', { p: P.name }))}</a>`;
+  const ou = usableUrl(r), src = detect(ou);
+  if (ou && src !== myPlatform) {
+    const label = src === 'generic' ? t('Ouvrir le lien toutes plateformes') : plat(src) ? t('Ouvrir le lien d’origine ({p})', { p: plat(src).name }) : t('Ouvrir le lien d’origine');
+    html += `<a class="btn ghost" href="${esc(ou)}" target="_blank" rel="noopener">${esc(label)}</a>`;
   }
+  html += `<details class="others"><summary>${esc(t('Autres plateformes'))}</summary><ul>` +
+    PLATFORMS.filter(p => p.id !== myPlatform).map(p => { const l = linkFor(r, p.id); return `<li><a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(t(l.direct ? 'Écouter sur {p}' : 'Chercher sur {p}', { p: p.name }))}</a></li>`; }).join('') +
+    `</ul></details></div>`;
+  return html;
+}
+function ficheHead(r) {
+  const by = r.dir === 'in' ? t('Recommandé par {name}, le {date}', { name: r.from, date: fmtDate(r.date) }) : t('Envoyée le {date}', { date: fmtDate(r.date) });
+  return `${sticker(r, true)}<div class="fiche"><div class="ttl">${esc(r.title)}</div><div class="art">${esc(r.artist)}</div>
+    <div class="by">${esc(by)}</div>${r.note ? `<div class="mot">${esc(r.note)}</div>` : ''}</div>`;
+}
+function showDetail(id) {
+  const r = recos.find(x => x.id === id); if (!r) return;
+  let html = ficheHead(r) + listenBlock(r);
+  if (r.dir === 'in') html += `<div class="seg" role="group">${STATUSES.map(([k, l]) => `<button class="${r.status === k ? 'on' : ''}" data-act="status" data-s="${k}">${esc(t(l))}</button>`).join('')}</div>`;
+  html += `<div class="actions">${r.dir === 'out'
+    ? `<button class="btn primary" data-act="reshare">${esc(t('Partager'))}</button>`
+    : `<button class="btn primary" data-act="forward">${esc(t('Faire suivre'))}</button>`}
+    <button class="btn danger" data-act="delete">${esc(t('Supprimer'))}</button></div>`;
+  openSheet(html, { kind: 'detail', id });
+}
+function showIncoming(r) {
+  const mine = recos.find(x => x.id === r.id);
+  const shown = Object.assign({ dir: 'in' }, r);
+  let html = ficheHead(shown) + listenBlock(shown) + '<div class="actions">';
+  if (mine && mine.dir === 'out') html += `<button class="btn ghost" disabled>${esc(t('C’est une reco que tu as envoyée.'))}</button>`;
+  else if (mine) html += `<button class="btn ghost" disabled>✓ ${esc(t('Déjà dans ta liste'))}</button>`;
+  else html += `<button class="btn orange" data-act="add">${esc(t('Ajouter à ma liste'))}</button>`;
+  html += '</div>';
+  if (!recos.length && !cals.length && !mine) html += inviteBlock('Garde tes recos', 'Ajoute Ascolta à ton écran d’accueil pour retrouver cette reco et partager les tiennes.');
+  openSheet(html, { kind: 'incoming', reco: r });
+}
+function inviteBlock(title, text) {
+  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
+  if (!ios && !android) return '';
+  return `<div class="invite"><strong>${esc(t(title))}</strong><p>${esc(t(text))}</p>
+    <p>${esc(t(ios ? 'Touche le bouton Partager de Safari, puis «' + NB + 'Sur l’écran d’accueil' + NB + '».' : 'Ouvre le menu ⋮ du navigateur, puis «' + NB + 'Ajouter à l’écran d’accueil' + NB + '».'))}</p></div>`;
+}
 
-  async function api(action, corps = null, params = {}) {
-    let rep;
-    try {
-      if (corps) {
-        rep = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                 body: JSON.stringify({ action, c: cercle?.c, ...corps }) });
-      } else {
-        const q = new URLSearchParams({ action, c: cercle?.c || '', ...params });
-        rep = await fetch(`${API}?${q}`);
-      }
-    } catch {
-      throw new Error(`Pas de connexion pour l’instant${NB}: réessaie dans un moment.`);
-    }
-    const json = await rep.json().catch(() => ({}));
-    if (!rep.ok) { const e = new Error(json.erreur || 'Erreur du serveur'); e.statut = rep.status; throw e; }
-    return json;
-  }
+// ----- Calendrier : l'autrice le remplit -----
+function showCalEdit(id, focusFor) {
+  const c = cals.find(x => x.id === id); if (!c) return;
+  const html = `<h2 id="calH">🎄 ${esc(calTitle(c))}</h2>
+    <label class="f" for="calFor">${esc(t('Pour qui' + NB + '? (visible par toi seule)'))}</label><input class="inp" id="calFor" maxlength="40" value="${esc(c.label)}" placeholder="${esc(t('Maman, les copines…'))}" autocomplete="off">
+    <p class="cal-sub">${esc(t('Une case par jour, du 1er au 24 décembre. Touche une case pour choisir son morceau.'))}</p>
+    <p class="cal-count">${esc(t('{n}/24 cases remplies', { n: filledCount(c) }))}</p>
+    ${calGrid(c, 'edit')}
+    <label class="f" for="calNote">${esc(t('Ton mot d’accueil (facultatif)'))}</label><textarea class="inp" id="calNote" maxlength="${CAL_NOTE_MAX}">${esc(c.note)}</textarea>
+    <label class="f" for="calName">${esc(t('Ton prénom'))}</label><input class="inp" id="calName" maxlength="40" value="${esc(c.from)}" autocomplete="given-name">
+    <div class="err" id="calErr"></div>
+    <div class="actions"><button class="btn primary" data-act="cshare">${esc(t('Partager le calendrier'))}</button>
+      <div class="row"><button class="btn ghost" data-act="cpreview">👀 ${esc(t('Aperçu'))}</button><button class="btn ghost" data-act="cdup">⧉ ${esc(t('Dupliquer'))}</button></div>
+      <button class="btn danger" data-act="cdelete">${esc(t('Supprimer le calendrier'))}</button></div>`;
+  openSheet(html, { kind: 'caledit', id });
+  $('calFor').addEventListener('input', e => { c.label = e.target.value.slice(0, 40); persistCals(); renderList(); $('calH').textContent = '🎄 ' + calTitle(c); });
+  if (focusFor) $('calFor').focus();
+  $('calNote').addEventListener('input', e => { c.note = e.target.value.slice(0, CAL_NOTE_MAX); persistCals(); });
+  $('calName').addEventListener('input', e => { c.from = e.target.value.slice(0, 40); persistCals(); renderList(); });
+}
+async function shareCal(c) {
+  if (!(c.from || '').trim()) { $('calErr').textContent = t('Indique ton prénom.'); $('calName').focus(); return; }
+  myName = c.from.trim(); save('ascolta.name', myName);
+  const missing = DAYS - filledCount(c);
+  if (missing && !confirm(t('Il manque {n} case(s). Partager quand même' + NB + '?', { n: missing }))) return;
+  const link = location.origin + location.pathname + '#c=' + await encodeReco(toCalPayload(c));
+  const lines = ['🎄 ' + t('Mon calendrier de l’Avent musical'), t('Un morceau par jour, du 1er au 24 décembre.')];
+  if ((c.note || '').trim()) lines.push(t('«' + NB + '{n}' + NB + '»', { n: c.note.trim() }));
+  lines.push('', t('Ouvre-le ici' + NB + ':'), link);
+  await shareText(lines.join('\n'), link);
+}
 
-  /* ================= Séances ================= */
-  function aLieu(c, date) {
-    if (c.rythme === 0) return date === c.ref;
-    if (jourIso(versDate(date)) !== c.jour) return false;
-    if (c.rythme === 2 && c.ref) return date >= c.ref && ecartJours(c.ref, date) % 14 === 0;   // rien avant la première séance
+// ----- Calendrier : les proches l'ouvrent (ou l'autrice en aperçu) -----
+function showCalView(id, opts) {
+  const c = cals.find(x => x.id === id); if (!c) return;
+  const o = opts || {}, preview = !!o.preview;
+  let html = `<h2>🎄 ${esc(preview ? t('Calendrier de l’Avent de {name}', { name: c.from || '?' }) : calTitle(c))}</h2>`;
+  if (preview) html += `<p class="cal-sub">👀 ${esc(t('Tu vois le calendrier comme tes proches le verront, case par case.'))}</p>`;
+  if ((c.note || '').trim()) html += `<div class="fiche"><div class="mot">${esc(c.note.trim())}</div></div>`;
+  html += `<p class="cal-count" style="margin-top:12px">${esc(calStatus(c, preview))}</p>` + calGrid(c, preview ? 'preview' : 'view');
+  if (o.welcome) html += inviteBlock('Garde ton calendrier', 'Ajoute Ascolta à ton écran d’accueil pour ouvrir une case chaque jour.');
+  html += '<div class="actions">' + (preview
+    ? `<button class="btn ghost" data-act="cedit">${esc(t('Retour au calendrier'))}</button>`
+    : `<button class="btn danger" data-act="cremove">${esc(t('Retirer ce calendrier'))}</button>`) + '</div>';
+  openSheet(html, { kind: 'calview', id, preview });
+}
+function showCalDay(id, d, preview) {
+  const c = cals.find(x => x.id === id), x = c && c.days[d - 1];
+  if (!x || !dayOpen(c, d, preview)) return;
+  if (!preview && c.dir === 'in') { c.opened = c.opened || []; if (!c.opened.includes(d)) { c.opened.push(d); persistCals(); renderList(); } }
+  const r = { dir: 'in', artist: x.artist, title: x.title, note: x.note, url: x.url };
+  let html = `<div class="fiche day"><div class="cal-date">🎄 ${esc(t('{d} décembre', { d }))}</div>
+    <div class="ttl">${esc(x.title)}</div><div class="art">${esc(x.artist)}</div>
+    <div class="by">${esc(t('Recommandé par {name}, le {date}', { name: c.from || '?', date: fmtDate(dayKey(c.year, d)) }))}</div>
+    ${x.note ? `<div class="mot">${esc(x.note)}</div>` : ''}</div>` + listenBlock(r) + '<div class="actions">';
+  if (!preview) html += recos.some(z => z.id === c.id + '-' + d)
+    ? `<button class="btn ghost" disabled>✓ ${esc(t('Déjà dans ta liste'))}</button>`
+    : `<button class="btn orange" data-act="cadd">${esc(t('Ajouter à ma liste'))}</button>`;
+  html += `<button class="btn ghost" data-act="cback">← ${esc(t('Retour au calendrier'))}</button></div>`;
+  openSheet(html, { kind: 'calday', id, day: d, preview });
+}
+
+// ----- Composer une reco -----
+function showCompose(prefill, ctx) {
+  const p = prefill || {}, day = ctx && ctx.cal ? ctx : null; // day : case d'un calendrier
+  const html = `<h2>${esc(day ? '🎄 ' + t('Case du {d} décembre', { d: day.day }) : t('Partager un morceau'))}</h2>
+    <label class="f" for="cArtist">${esc(t('Artiste'))}</label><input class="inp" id="cArtist" maxlength="120" value="${esc(p.artist)}" autocomplete="off">
+    <label class="f" for="cTitle">${esc(t('Titre ou album'))}</label><input class="inp" id="cTitle" maxlength="160" value="${esc(p.title)}" autocomplete="off">
+    <label class="f" for="cUrl">${esc(t('Lien (facultatif)'))}</label><input class="inp" id="cUrl" type="url" inputmode="url" maxlength="600" value="${esc(p.url)}" autocomplete="off">
+    <div class="hint"><span id="cUrlHint">${esc(t('Colle le lien de ta plateforme, si tu en as un.'))}</span></div>
+    <label class="f" for="cNote">${esc(t('Ton mot (facultatif)'))}</label><textarea class="inp" id="cNote" maxlength="${NOTE_MAX}" placeholder="${esc(t('Pourquoi ce morceau' + NB + '?'))}">${esc(p.note)}</textarea>
+    <div class="hint"><span></span><span id="cCount">${(p.note || '').length}/${NOTE_MAX}</span></div>
+    ${day ? '' : `<label class="f" for="cName">${esc(t('Ton prénom'))}</label><input class="inp" id="cName" maxlength="40" value="${esc(myName)}" autocomplete="given-name">`}
+    <div class="err" id="cErr"></div>
+    ${day ? `<button class="btn primary" data-act="send">${esc(t('Enregistrer la case'))}</button>
+      ${p.artist ? `<button class="btn danger" data-act="cclear">${esc(t('Vider la case'))}</button>` : ''}
+      <button class="btn ghost" data-act="cedit">${esc(t('Annuler'))}</button>`
+    : `<button class="btn primary" data-act="send">${esc(t('Partager'))}</button>`}`;
+  openSheet(html, day ? { kind: 'compose', cal: day.cal, day: day.day } : { kind: 'compose' });
+  $('cNote').addEventListener('input', e => $('cCount').textContent = e.target.value.length + '/' + NOTE_MAX);
+  // Message de partage collé dans Artiste, Titre ou Lien : on le répartit dans les champs
+  ['cArtist', 'cTitle', 'cUrl'].forEach(id => $(id).addEventListener('paste', e => {
+    const txt = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+    if (applyShare(txt, id)) e.preventDefault();
+  }));
+  // Filet si le collage n'est pas intercepté (clavier, menu contextuel…)
+  $('cUrl').addEventListener('input', e => applyShare(e.target.value, 'cUrl', true));
+}
+// « Écoute TITRE de ARTISTE sur toutes les principales apps… 🎧 https://… » (Deezer, FR/EN)
+function parseShare(text) {
+  const m = String(text || '').match(/https?:\/\/\S+/);
+  if (!m) return null;
+  const before = text.slice(0, m.index).trim();
+  let x = before.match(/^[ÉEé]coute\s+(.+)\s+de\s+(.+?)\s+sur\s+/i) || before.match(/^Listen to\s+(.+)\s+by\s+(.+?)\s+on\s+/i);
+  return x ? { title: x[1].trim(), artist: x[2].trim(), url: m[0] } : { url: m[0] };
+}
+let lastDz = '';
+async function fillFromDeezer(ref) {
+  const key = ref.type + ref.id;
+  if (key === lastDz) return;
+  lastDz = key;
+  const hint = $('cUrlHint');
+  hint.textContent = t('Recherche de l’artiste et du titre chez Deezer…');
+  const r = await deezerLookup(ref);
+  if (lastDz !== key || !$('cArtist')) return;
+  if (!r) { hint.textContent = t('Deezer n’a pas répondu : indique l’artiste et le titre.'); lastDz = ''; return; }
+  if (!$('cArtist').value.trim()) $('cArtist').value = r.artist.slice(0, 120);
+  if (!$('cTitle').value.trim()) $('cTitle').value = r.title.slice(0, 160);
+  hint.textContent = t('Artiste et titre repris de Deezer. Vérifie-les.');
+}
+function applyShare(text, fieldId, fromInput) {
+  const p = parseShare(text);
+  const dz = p && deezerRef(p.url);
+  if (dz && !p.title) {
+    $('cUrl').value = safeUrl(p.url);
+    if (fieldId !== 'cUrl') { const f = $(fieldId); if (/https?:\/\//.test(f.value)) f.value = ''; }
+    fillFromDeezer(dz);
     return true;
   }
-
-  function interruptionDe(coursId, date) {
-    const liste = donnees?.interruptions || [];
-    return liste.find((i) => !i.cours && i.du <= date && date <= i.au)
-        || liste.find((i) => i.cours === coursId && i.du <= date && date <= i.au) || null;
+  if (!p || !p.title) {
+    // Adresse seule collée ailleurs que dans Lien : on la range dans Lien
+    if (p && !fromInput && fieldId !== 'cUrl' && /^\s*https?:\/\/\S+\s*$/.test(text)) { $('cUrl').value = p.url; return true; }
+    return false;
   }
-
-  function seances() {
-    if (!donnees) return [];
-    const liste = [];
-    const maintenant = new Date();
-    for (let i = 0; i < FENETRE; i++) {
-      const d = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate() + i);
-      const date = iso(d);
-      for (const c of donnees.cours) {
-        if (!aLieu(c, date)) continue;
-        if (i === 0) {                                   // séance du jour terminée depuis plus d'1 h 30 : on la masque
-          const [h, m] = c.heure.split(':').map(Number);
-          if (maintenant - new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m) > 90 * 60e3) continue;
-        }
-        liste.push({ cours: c, date, cle: cle(c.id, date), coupure: interruptionDe(c.id, date) });
-      }
-    }
-    return liste.sort((a, b) => (a.date + a.cours.heure).localeCompare(b.date + b.cours.heure));
+  const a = $('cArtist'), ti = $('cTitle');
+  if (!a.value.trim() || fieldId === 'cArtist') a.value = p.artist.slice(0, 120);
+  if (!ti.value.trim() || fieldId === 'cTitle') ti.value = p.title.slice(0, 160);
+  const dead = deadLink(p.url);
+  $('cUrl').value = dead ? '' : p.url;
+  $('cUrlHint').textContent = t(dead ? 'Artiste et titre repris du message. Vérifie-les. Le lien court de Deezer n’est pas gardé : ton destinataire passera par la recherche.' : 'Artiste et titre repris du message. Vérifie-les.');
+  return true;
+}
+async function sendCompose() {
+  const st = sheetState || {}, cal = st.cal ? cals.find(c => c.id === st.cal) : null;
+  const artist = $('cArtist').value.trim(), title = $('cTitle').value.trim(), note = $('cNote').value.trim().slice(0, NOTE_MAX), name = $('cName') ? $('cName').value.trim() : '';
+  let url = $('cUrl').value.trim();
+  const err = m => $('cErr').textContent = t(m);
+  if (!artist || !title) return err('Indique l’artiste et le titre.');
+  if (!name && !cal) return err('Indique ton prénom.');
+  if (url) {
+    // On extrait l'adresse si l'appli a collé « texte + lien » (Spotify, Deezer le font)
+    const m = url.match(/https?:\/\/\S+/); url = safeUrl(m ? m[0] : url);
+    if (!url) return err('Ce lien ne ressemble pas à une adresse web.');
+    if (deadLink(url)) url = '';
+    url = cleanUrl(url);
   }
-
-  function nettoyer() {
-    const auj = aujourdhui();
-    for (const k of Object.keys(absences)) if (k.split('|')[1] < auj) delete absences[k];
-    for (const k of Object.keys(miennes)) if (k.split('|')[1] < auj) delete miennes[k];
-    if (donnees) {
-      const ids = new Set(donnees.inscriptions.map((i) => i.id));
-      for (const [k, v] of Object.entries(miennes)) if (!ids.has(v.id)) delete miennes[k];
-      const cours = new Set(donnees.cours.filter((c) => c.rythme !== 0).map((c) => c.id));
-      habitudes = habitudes.filter((h) => cours.has(h));
-    }
-    ecrire('absences', absences); ecrire('miennes', miennes); ecrire('habitudes', habitudes);
+  if (cal) {
+    cal.days[st.day - 1] = { artist, title, note, url }; persistCals(); renderList();
+    showCalEdit(cal.id); toast('✓ ' + t('Case enregistrée')); return;
   }
-
-  async function inscrire(s, source) {
-    const r = await api('inscrire', { cours: s.cours.id, date: s.date, surnom: profil.surnom, animal: profil.animal });
-    miennes[s.cle] = { id: r.id, jeton: r.jeton, source };
-    ecrire('miennes', miennes);
+  myName = name; save('ascolta.name', myName);
+  const r = { id: newId(), dir: 'out', artist, title, note, from: name, date: today(), url, savedAt: new Date().toISOString() };
+  recos.push(r); persist();
+  closeSheet(); renderList();
+  await shareReco(r);
+}
+async function shareReco(r) {
+  const link = location.origin + location.pathname + '#r=' + await encodeReco(toPayload(r));
+  const lines = ['🎵 ' + r.artist + ' — ' + r.title];
+  if (r.note) lines.push(t('«' + NB + '{n}' + NB + '»', { n: r.note }));
+  lines.push('', t('Écoute sur ta plateforme' + NB + ':'), link);
+  await shareText(lines.join('\n'), link);
+}
+async function shareText(text, link) {
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
   }
+  try { await navigator.clipboard.writeText(text); toast('📋 ' + t('Lien copié')); }
+  catch (e) { prompt(t('Copie ce lien' + NB + ':'), link); }
+}
 
-  async function retirer(k) {
-    const m = miennes[k];
-    if (!m) return;
-    await api('retirer', { id: m.id, jeton: m.jeton });
-    delete miennes[k];
-    ecrire('miennes', miennes);
-  }
-
-  // À chaque ouverture : inscription aux séances habituelles des 7 prochains jours.
-  async function appliquerHabitudes() {
-    if (!profil || lire('pause', false)) return false;
-    let change = false;
-    for (const s of seances()) {
-      if (s.coupure) continue;
-      if (habitudes.includes(s.cours.id) && !miennes[s.cle] && !absences[s.cle]) {
-        try { await inscrire(s, 'habitude'); change = true; } catch {}
-      }
-    }
-    return change;
-  }
-
-  async function charger() {
-    const params = cercle.admin ? { admin: cercle.admin } : {};
-    donnees = await api('semaine', null, params);
-    if (donnees.nom && donnees.nom !== cercle.nom) { cercle.nom = donnees.nom; ecrire('cercle', cercle); }
-    nettoyer();
-    if (await appliquerHabitudes()) donnees = await api('semaine', null, params);
-  }
-
-  /* Texte affiché dans les cadres de date et d'heure */
-  function majBoites() {
-    document.querySelectorAll('.boite input').forEach((i) => {
-      const v = i.parentElement.querySelector('.valeur');
-      if (!v) return;
-      if (!i.value) { v.textContent = 'Choisir…'; v.classList.add('doux'); return; }
-      v.classList.remove('doux');
-      v.textContent = i.type === 'date'
-        ? premier(new Intl.DateTimeFormat('fr-BE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(versDate(i.value)))
-        : heureFr(i.value);
-    });
-  }
-  document.addEventListener('input', (e) => { if (e.target.closest('.boite')) majBoites(); });
-  document.addEventListener('change', (e) => { if (e.target.closest('.boite')) majBoites(); });
-
-  /* ================= Écrans ================= */
-  function afficher() { afficherEcran(); majBoites(); }
-  function afficherEcran() {
-    if (!cercle) return ecranAccueil();
-    if (ecran === 'cle') return ecranCle();
-    if (!profil || ecran === 'profil') return ecranProfil();
-    if (ecran === 'cours') return ecranCours();
-    if (ecran === 'inviter') return ecranInviter();
-    if (ecran === 'gerer') return ecranGerer();
-    return ecranSemaine();
-  }
-
-  function ecranAccueil() {
-    $app.innerHTML = `
-      <div class="entete"><div><h1>Corsia</h1><div class="sous">Qui vient au cours${NB}?</div></div></div>
-      <div class="pile">
-        <div class="carte">
-          <p>Pour rejoindre un cercle, ouvre le <strong>lien d’invitation</strong> qu’on t’a envoyé, ou scanne son QR code.</p>
-        </div>
-        <div class="carte">
-          <p>Tu veux lancer un nouveau cercle pour ton cours${NB}?</p>
-          <label class="champ">Nom du cercle
-            <input type="text" id="nomCercle" maxlength="40" placeholder="Cours en piscine" autocomplete="off">
-          </label>
-          <button class="btn plein" id="creer">Créer le cercle</button>
-        </div>
-      </div>`;
-    document.getElementById('creer').onclick = async (e) => {
-      e.target.disabled = true;
+// ----- Réglages -----
+function showSettings() {
+  const html = `<h2>${esc(t('Réglages'))}</h2><div class="set">
+    <h3>${esc(t('Langue'))}</h3><div class="lang"><button class="${lang === 'fr' ? 'on' : ''}" data-act="lang" data-l="fr">Français</button><button class="${lang === 'en' ? 'on' : ''}" data-act="lang" data-l="en">English</button></div>
+    <h3><label for="sPlat">${esc(t('Ma plateforme'))}</label></h3><select class="inp" id="sPlat"><option value="">${esc(t('Aucune'))}</option>${PLATFORMS.map(p => `<option value="${p.id}"${myPlatform === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+    <h3><label for="sName">${esc(t('Mon prénom'))}</label></h3><input class="inp" id="sName" maxlength="40" value="${esc(myName)}">
+    <h3>🎄 ${esc(t('Calendrier de l’Avent'))}</h3>
+    <button class="btn ghost" data-act="cstart">${esc(t(cals.some(c => c.dir === 'out') ? 'Nouveau calendrier de l’Avent' : 'Créer mon calendrier de l’Avent'))}</button>
+    <h3>${esc(t('Sauvegarde'))}</h3>
+    <button class="btn ghost" data-act="export">${esc(t('Exporter mes recos'))}</button>
+    <button class="btn ghost" data-act="import">${esc(t('Importer une sauvegarde'))}</button>
+    <input type="file" id="sFile" accept="application/json,.json" hidden>
+    <button class="btn danger" data-act="wipe">${esc(t('Tout effacer'))}</button>
+    <p class="about">${esc(t('Aucun serveur' + NB + ': tes recos restent sur cet appareil et dans les liens que tu envoies.'))}</p></div>`;
+  openSheet(html, { kind: 'settings' });
+  $('sPlat').addEventListener('change', e => { myPlatform = e.target.value || null; save('ascolta.platform', myPlatform); });
+  $('sName').addEventListener('change', e => { myName = e.target.value.trim(); save('ascolta.name', myName); });
+  $('sFile').addEventListener('change', importFile);
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify({ app: 'ascolta', v: 1, recos, cals }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ascolta-' + today() + '.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function importFile(e) {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text()); const arr = Array.isArray(data) ? data : data.recos;
+    if (!Array.isArray(arr)) throw 0;
+    let n = 0;
+    for (const x of (Array.isArray(data.cals) ? data.cals : [])) {
+      if (!x || !x.id || !Array.isArray(x.days) || cals.some(c => c.id === x.id)) continue;
       try {
-        const nom = document.getElementById('nomCercle').value.trim();
-        const r = await api('creer_cercle', { nom });
-        cercle = { c: r.c, admin: r.admin, nom };
-        ecrire('cercle', cercle);
-        ecran = 'cle';
-        afficher();
-      } catch (err) {
-        dire(err.statut === 403 ? 'La création d’un nouveau cercle demande la clé d’un cercle existant.' : err.message);
-        e.target.disabled = false;
-      }
-    };
-  }
-
-  function ecranCle() {
-    $app.innerHTML = `
-      <div class="entete"><div><h1>Corsia</h1><div class="sous">${esc(cercle.nom || 'Ton cercle')}</div></div></div>
-      <div class="pile">
-        <div class="carte">
-          <h2>Ta clé de gestion</h2>
-          <p>Cette <strong>clé d’administration</strong> te permet d’ajouter des cours, de les interrompre et de valider ceux qu’on te propose.</p>
-          <div class="cle">${esc(cercle.admin)}</div>
-          <p class="doux">Range-la dans ton gestionnaire de mots de passe. Ne la partage pas${NB}: l’invitation, c’est un autre lien.</p>
-          <button class="btn" id="copier">Copier la clé</button>
-          <button class="btn plein" id="suite">C’est noté</button>
-        </div>
-      </div>`;
-    document.getElementById('copier').onclick = () => copier(cercle.admin, 'Clé copiée');
-    document.getElementById('suite').onclick = () => { ecran = profil ? 'cours' : 'semaine'; afficher(); };
-  }
-
-  function ecranProfil() {
-    const choix = { surnom: profil?.surnom || '', animal: profil?.animal || '' };
-    const premier = !profil;
-    $app.innerHTML = `
-      ${premier ? '<div class="entete"><div><h1>Corsia</h1><div class="sous">' + esc(cercle.nom || 'Bienvenue') + '</div></div></div>'
-                : '<div class="retour"><button id="retour">‹ Ma semaine</button></div>'}
-      <div class="pile">
-        <h2 class="titre-ecran">Choisis ton animal</h2>
-        <div class="grille-animaux" role="group" aria-label="Animaux">
-          ${ANIMAUX.map(([id, nom]) => `
-            <button class="animal" data-animal="${id}" aria-pressed="${choix.animal === id}">
-              <img src="animaux/${id}.png" alt=""><span>${nom}</span>
-            </button>`).join('')}
-        </div>
-        <label class="champ">Ton surnom dans le cercle
-          <input type="text" id="surnom" maxlength="20" value="${esc(choix.surnom)}" autocomplete="nickname" placeholder="Prénom ou petit nom">
-        </label>
-        <button class="btn plein" id="enregistrer">C’est moi</button>
-        <p class="pied">Illustrations${NB}: Microsoft Fluent Emoji (licence MIT) · capybara créé avec ChatGPT</p>
-      </div>`;
-    $app.querySelectorAll('.animal').forEach((b) => b.onclick = () => {
-      choix.animal = b.dataset.animal;
-      $app.querySelectorAll('.animal').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    });
-    const r = document.getElementById('retour'); if (r) r.onclick = () => { ecran = 'semaine'; afficher(); };
-    document.getElementById('enregistrer').onclick = async (e) => {
-      choix.surnom = document.getElementById('surnom').value.trim();
-      if (!choix.animal) return dire('Choisis d’abord un animal 🙂');
-      if (!choix.surnom) return dire('Indique un surnom');
-      e.target.disabled = true;
-      const ancien = profil;
-      profil = choix; ecrire('profil', profil);
-      if (ancien && (ancien.surnom !== profil.surnom || ancien.animal !== profil.animal)) {
-        for (const m of Object.values(miennes)) {
-          try { await api('modifier', { id: m.id, jeton: m.jeton, surnom: profil.surnom, animal: profil.animal }); } catch {}
-        }
-      }
-      ecran = premier ? 'cours' : 'semaine';
-      await rafraichir();
-    };
-  }
-
-  function ecranSemaine() {
-    const toutes = seances();
-    const parCle = new Map();
-    for (const i of donnees?.inscriptions || []) {
-      const k = cle(i.cours, i.date);
-      if (!parCle.has(k)) parCle.set(k, []);
-      parCle.get(k).push(i);
+        const c = fromCalPayload(toCalPayload(x));
+        c.dir = x.dir === 'out' ? 'out' : 'in';
+        if (c.dir === 'out' && typeof x.label === 'string') c.label = x.label.slice(0, 40);
+        c.opened = Array.isArray(x.opened) ? x.opened.filter(d => Number.isInteger(d) && d >= 1 && d <= DAYS) : [];
+        c.savedAt = typeof x.savedAt === 'string' ? x.savedAt : new Date().toISOString();
+        cals.push(c); n++;
+      } catch (err) {}
     }
-    const mesIds = new Set(Object.values(miennes).map((m) => m.id));
-    const reactionDe = new Map((donnees?.inscriptions || []).map((i) => [i.id, i.reaction]));
-    const pause = lire('pause', false);
-
-    // Filtre « Mes cours / Tous les cours » : par défaut, mes cours si j'ai des habitudes.
-    let filtre = lire('filtre', null) || (habitudes.length ? 'miens' : 'tous');
-    const estMien = (s) => habitudes.includes(s.cours.id) || !!miennes[s.cle];
-    const liste = filtre === 'miens' ? toutes.filter(estMien) : toutes;
-    const cachees = toutes.length - liste.length;
-
-    const emoji = (r) => { const t = REACTIONS.filter((y) => (r || '').split(',').includes(y[0])).map((y) => y[1]).join(''); return t ? NB + t : ''; };
-
-    const cartes = liste.map((s) => {
-      const c = s.cours;
-      const unique = c.rythme === 0 ? '<span class="special">séance unique</span>' : '';
-      const entete = `<div><div class="quand">${dateFr(s.date)}</div>
-                      <div class="quoi">${esc(c.nom)} · ${heureFr(c.heure)}${unique}</div></div>`;
-      if (s.coupure) {
-        const i = s.coupure;
-        const texte = !i.cours ? 'Club fermé'
-          : i.du === i.au ? 'Pas de cours ce jour-là'
-          : `Pas de cours jusqu’au ${dateCourte(i.au)}`;
-        return `<article class="carte annulee">${entete}<span class="mention">${texte}</span></article>`;
-      }
-      const inscrits = parCle.get(s.cle) || [];
-      const moi = miennes[s.cle];
-      const habituel = habitudes.includes(c.id);
-      const autres = inscrits.filter((i) => !mesIds.has(i.id));
-      const noms = [...(moi ? ['Toi' + emoji(reactionDe.get(moi.id))] : []),
-                    ...autres.map((i) => esc(i.surnom) + emoji(i.reaction))];
-      const texteNoms = noms.length === 0 ? 'Personne du cercle pour l’instant'
-        : noms.length === 1 ? noms[0] : `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
-      const pastilles = [...(moi ? [pastille(profil.animal)] : []), ...autres.slice(0, 6).map((i) => pastille(i.animal))].join('');
-
-      let action;
-      if (moi) {
-        const actuelles = (reactionDe.get(moi.id) || '').split(',');
-        action = `<div class="etat">✓ ${habituel ? `Tu y vas, comme chaque ${JOURS[c.jour]}` : 'Tu y vas'}</div>
-          <div class="reactions" role="group" aria-label="Un petit mot${NB}? (facultatif)">
-            ${REACTIONS.map(([id, e, t]) => `<button class="reaction" data-reagir="${s.cle}" data-r="${id}" aria-pressed="${actuelles.includes(id)}">${e} ${t}</button>`).join('')}
-          </div>
-          <button class="btn discret" data-retirer="${s.cle}">Pas cette fois</button>`;
-      } else if (habituel && absences[s.cle]) {
-        action = `<div class="doux">Pas cette fois</div>
-                  <button class="btn" data-revenir="${s.cle}">Finalement, j’y vais</button>`;
-      } else {
-        action = `<button class="btn" data-venir="${s.cle}">${habituel ? 'J’y vais' : c.rythme === 0 ? 'J’y vais' : 'Je viens exceptionnellement'}</button>`;
-      }
-      return `
-        <article class="carte${moi ? ' mienne' : ''}">
-          ${entete}
-          <div class="qui">${pastilles}<span class="noms">${texteNoms}</span></div>
-          ${action}
-        </article>`;
-    }).join('');
-
-    const nbProps = donnees?.propositions?.length || 0;
-    const props = nbProps ? `<div class="encadre"><strong>${nbProps} cours proposé${nbProps > 1 ? 's' : ''} à valider</strong>
-      <button class="btn" id="voirProps">Voir</button></div>` : '';
-
-    let corps;
-    if (!donnees?.cours?.length) {
-      corps = `<div class="vide">Aucun cours dans ce cercle pour l’instant.<br>${cercle.admin ? `Ajoute le premier dans «${NB}Les cours${NB}».` : ''}</div>`;
-    } else if (!liste.length) {
-      corps = `<div class="vide">${filtre === 'miens' && toutes.length ? 'Aucun de tes cours dans les 7 prochains jours.' : 'Aucun cours dans les 7 prochains jours.'}</div>`;
-    } else corps = cartes;
-
-    $app.innerHTML = `
-      <div class="entete">
-        <div><h1>Corsia</h1><div class="sous">${esc(cercle.nom || 'Ton cercle')}</div></div>
-        <button class="moi-btn" id="moi" aria-label="Mon animal et mon surnom">${pastille(profil.animal, true)}</button>
-      </div>
-      <div class="pile">
-        ${pause ? `<div class="encadre"><strong>Tu es hors de l’eau pour un moment.</strong>
-          <p class="doux">Corsia ne t’inscrit plus automatiquement. Tes habitudes sont gardées.</p>
-          <button class="btn plein" id="replonger">Je replonge</button></div>` : ''}
-        ${props}
-        <h2>Cette semaine</h2>
-        <div class="bascule" role="group" aria-label="Cours affichés">
-          <button data-filtre="miens" aria-pressed="${filtre === 'miens'}">Mes cours</button>
-          <button data-filtre="tous" aria-pressed="${filtre === 'tous'}">Tous les cours</button>
-        </div>
-        ${corps}
-        ${filtre === 'miens' && cachees ? `<p class="doux" style="text-align:center">${cachees} autre${cachees > 1 ? 's' : ''} séance${cachees > 1 ? 's' : ''} dans «${NB}Tous les cours${NB}»</p>` : ''}
-        <div class="rangee">
-          <button class="btn discret" id="mesCours">Les cours</button>
-          <button class="btn discret" id="inviter">Inviter</button>
-        </div>
-        ${!pause ? `<button class="btn discret pause" id="pause">
-          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 20c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M12 3v7m-3-3 3 3 3-3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Je sors de l’eau un moment</button>
-        <p class="doux" style="text-align:center;margin-top:-6px">Une pause, sans que personne ne le remarque.</p>` : ''}
-      </div>`;
-
-    $app.querySelectorAll('[data-filtre]').forEach((b) => b.onclick = () => { ecrire('filtre', b.dataset.filtre); afficher(); });
-    $app.querySelectorAll('[data-venir]').forEach((b) => b.onclick = () => agir(b, async () => {
-      const s = toutes.find((x) => x.cle === b.dataset.venir);
-      delete absences[s.cle]; ecrire('absences', absences);
-      await inscrire(s, habitudes.includes(s.cours.id) ? 'habitude' : 'ponctuel');
-    }));
-    $app.querySelectorAll('[data-revenir]').forEach((b) => b.onclick = () => agir(b, async () => {
-      const s = toutes.find((x) => x.cle === b.dataset.revenir);
-      delete absences[s.cle]; ecrire('absences', absences);
-      await inscrire(s, 'habitude');
-    }));
-    $app.querySelectorAll('[data-retirer]').forEach((b) => b.onclick = () => agir(b, async () => {
-      const k = b.dataset.retirer;
-      if (habitudes.includes(k.split('|')[0])) { absences[k] = true; ecrire('absences', absences); }
-      await retirer(k);
-    }));
-    $app.querySelectorAll('[data-reagir]').forEach((b) => b.onclick = () => agir(b, async () => {
-      const m = miennes[b.dataset.reagir];
-      const r = b.dataset.r;
-      let liste = [...b.parentElement.querySelectorAll('[aria-pressed="true"]')].map((x) => x.dataset.r);
-      if (liste.includes(r)) liste = liste.filter((x) => x !== r);          // second appui : on retire
-      else if (r === 'peutetre') liste = ['peutetre'];                        // « peut-être pas » reste seule
-      else liste = [...liste.filter((x) => x !== 'peutetre'), r];             // « hâte » et « retard » se cumulent
-      await api('modifier', { id: m.id, jeton: m.jeton, reaction: liste.join(',') });
-    }));
-    document.getElementById('moi').onclick = () => { ecran = 'profil'; afficher(); };
-    document.getElementById('mesCours').onclick = () => { ecran = 'cours'; afficher(); };
-    document.getElementById('inviter').onclick = () => { ecran = 'inviter'; afficher(); };
-    const vp = document.getElementById('voirProps'); if (vp) vp.onclick = () => { ecran = 'cours'; afficher(); };
-    const pz = document.getElementById('pause'); if (pz) pz.onclick = () => agir(pz, async () => {
-      ecrire('pause', true);
-      for (const [k, m] of Object.entries(miennes)) if (m.source === 'habitude') await retirer(k);
-    }, 'Bonne pause 🌊');
-    const rp = document.getElementById('replonger'); if (rp) rp.onclick = () => agir(rp, async () => {
-      oublier('pause');
-      await appliquerHabitudes();
-    }, 'Bon retour dans l’eau');
-  }
-
-  /* ----- Formulaire d'un cours (ajout ou proposition) ----- */
-  function formulaireCours(admin) {
-    const options = JOURS.slice(1).map((j, i) => `<option value="${i + 1}">${j[0].toUpperCase() + j.slice(1)}</option>`).join('');
-    return `
-      <div class="carte">
-        <label class="champ">Nom du cours <input type="text" id="nomCours" maxlength="30" placeholder="Aquafit, Apnée…"></label>
-        <label class="champ">Rythme
-          <select id="rythme">
-            <option value="1">Chaque semaine</option>
-            <option value="2">Une semaine sur deux</option>
-            <option value="0">Séance unique</option>
-          </select></label>
-        <label class="champ" id="champJour">Jour <select id="jourCours">${options}</select></label>
-        <label class="champ" id="champRef" hidden><span id="libRef">Date de la prochaine séance</span> <span class="boite"><span class="valeur" aria-hidden="true"></span><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input type="date" id="refCours" min="${aujourdhui()}"></span></label>
-        <label class="champ">Heure <span class="boite"><span class="valeur" aria-hidden="true"></span><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><input type="time" id="heureCours" value="19:00"></span></label>
-        <button class="btn plein" id="ajouter">${admin ? 'Ajouter' : 'Proposer'}</button>
-        ${admin ? '' : '<p class="doux">La personne qui gère le cercle validera ta proposition.</p>'}
-      </div>`;
-  }
-
-  function brancherFormulaireCours(admin) {
-    const rythme = document.getElementById('rythme');
-    const maj = () => {
-      const r = rythme.value;
-      document.getElementById('champJour').hidden = r !== '1';
-      document.getElementById('champRef').hidden = r === '1';
-      document.getElementById('libRef').textContent = r === '0' ? 'Date' : 'Date de la prochaine séance';
-    };
-    rythme.onchange = maj; maj();
-    document.getElementById('ajouter').onclick = (e) => {
-      const nom = document.getElementById('nomCours').value.trim();
-      const r = Number(rythme.value);
-      const ref = document.getElementById('refCours').value;
-      if (!nom) return dire('Indique le nom du cours');
-      if (r !== 1 && !ref) return dire('Indique la date');
-      agir(e.target, () => api('proposer', { admin: cercle.admin, nom, rythme: r, ref: r === 1 ? null : ref,
-        jour: Number(document.getElementById('jourCours').value), heure: document.getElementById('heureCours').value }),
-        admin ? 'Cours ajouté' : `Proposition envoyée, merci${NB}!`);
-    };
-  }
-
-  function formulaireCoupure(cible) {
-    const auj = aujourdhui();
-    return `<div class="formulaire">
-        <label class="champ">Du <span class="boite"><span class="valeur" aria-hidden="true"></span><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input type="date" id="du" min="${auj}" value="${auj}"></span></label>
-        <label class="champ">Au <span class="boite"><span class="valeur" aria-hidden="true"></span><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input type="date" id="au" min="${auj}" value="${auj}"></span></label>
-        <p class="doux">Un seul jour${NB}? Mets la même date deux fois. Les inscriptions déjà faites sur ces séances seront retirées.</p>
-        <div class="rangee">
-          <button class="btn plein petit" id="validerCoupure" data-cible="${cible}">${cible === 'club' ? 'Fermer' : 'Interrompre'}</button>
-          <button class="btn discret petit" id="annulerCoupure">Annuler</button>
-        </div>
-      </div>`;
-  }
-
-  function prochaineFr(c) {
-    const d0 = new Date();
-    for (let i = 0; i < 400; i++) {
-      const date = iso(new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + i));
-      if (c.rythme === 0 && date > c.ref) break;
-      if (aLieu(c, date) && !interruptionDe(c.id, date)) {
-        return `Prochaine séance${NB}: ${date === aujourdhui() ? 'aujourd’hui' : dateMoyenne(date)}`;
-      }
+    persistCals();
+    for (const x of arr) {
+      if (!x || !x.id || recos.some(r => r.id === x.id)) continue;
+      try {
+        const r = fromPayload({ i: x.id, a: x.artist, t: x.title, n: x.note, f: x.from, d: x.date, u: x.url });
+        r.dir = x.dir === 'out' ? 'out' : 'in'; if (r.dir === 'in') r.status = STATUS_ICON[x.status] ? x.status : 'todo';
+        r.savedAt = typeof x.savedAt === 'string' ? x.savedAt : new Date().toISOString();
+        recos.push(r); n++;
+      } catch (err) {}
     }
-    return 'Pas de séance prévue';
+    persist(); renderList(); toast(t('{n} recos importées', { n }));
+  } catch (err) { toast('⚠️ ' + t('Fichier illisible')); }
+  e.target.value = '';
+}
+
+// ============ ÉVÉNEMENTS ============
+$('chips').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; filter = b.dataset.f; renderAll(); });
+$('search').addEventListener('input', renderList);
+$('list').addEventListener('click', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  if (!card.dataset.cal) return showDetail(card.dataset.id);
+  const c = cals.find(x => x.id === card.dataset.cal);
+  if (c) c.dir === 'out' ? showCalEdit(c.id) : showCalView(c.id);
+});
+$('fab').addEventListener('click', () => showCompose());
+$('menuBtn').addEventListener('click', showSettings);
+$('ov').addEventListener('click', e => { if (e.target === $('ov')) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('ov').classList.contains('open')) closeSheet(); });
+$('sheet').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, st = sheetState || {};
+  if (act === 'close') return closeSheet();
+  if (act === 'pick') {
+    myPlatform = b.dataset.p; save('ascolta.platform', myPlatform);
+    if (st.kind === 'detail') showDetail(st.id); else if (st.kind === 'incoming') showIncoming(st.reco);
+    else if (st.kind === 'calday') showCalDay(st.id, st.day, st.preview);
+    return;
   }
-
-  function periodeFr(i) {
-    return i.du === i.au ? `le ${dateMoyenne(i.du)}` : `du ${dateCourte(i.du)} au ${dateCourte(i.au)}`;
+  if (act === 'send') return sendCompose();
+  if (act === 'add' && st.kind === 'incoming') {
+    if (!recos.some(r => r.id === st.reco.id)) { recos.push(Object.assign({}, st.reco, { dir: 'in', status: 'todo', savedAt: new Date().toISOString() })); persist(); }
+    closeSheet(); filter = 'all'; renderAll(); toast('✓ ' + t('Ajoutée à ta liste')); return;
   }
-
-  function ecranCours() {
-    const cours = donnees?.cours || [];
-    const props = donnees?.propositions || [];
-    const inter = donnees?.interruptions || [];
-    const admin = !!cercle.admin;
-    const ligneCoupure = (i) => `<div class="interruption"><span>Pas de cours ${periodeFr(i)}</span>
-        ${admin ? `<button class="lien" data-annuler-coupure="${i.id}">Rétablir</button>` : ''}</div>`;
-
-    $app.innerHTML = `
-      <div class="retour"><button id="retour">‹ Ma semaine</button></div>
-      <div class="pile">
-        <h2 class="titre-ecran">Les cours</h2>
-        <p class="doux">Tous les cours du cercle. Coche ceux où tu vas d’habitude${NB}: Corsia t’y inscrira, et tu pourras toujours dire «${NB}pas cette fois${NB}».</p>
-        <div class="carte">
-          ${cours.length ? cours.map((c) => `
-            <div class="bloc-cours">
-              ${c.rythme === 0
-                ? `<div><div class="titre">${esc(c.nom)}</div><div class="detail">${rythmeFr(c)}</div></div>`
-                : `<label class="coche"><input type="checkbox" data-habitude="${c.id}" ${habitudes.includes(c.id) ? 'checked' : ''}>
-                    <span>${esc(c.nom)}<br><span class="detail" style="font-weight:400">${rythmeFr(c)}</span></span></label>`}
-              <div class="detail">${prochaineFr(c)}</div>
-              ${inter.filter((i) => i.cours === c.id).map(ligneCoupure).join('')}
-              ${admin ? `<div class="outils">
-                  ${c.rythme !== 0 ? `<button class="lien" data-ouvrir="${c.id}">Interrompre</button>` : ''}
-                  <button class="lien" data-supprimer="${c.id}">Supprimer</button></div>
-                  ${ouvert === c.id ? formulaireCoupure(c.id) : ''}` : ''}
-            </div>`).join('') : '<p class="doux">Aucun cours pour l’instant.</p>'}
-        </div>
-
-        ${admin || inter.some((i) => !i.cours) ? `
-          <h2>Fermetures du club</h2>
-          <div class="carte">
-            ${inter.filter((i) => !i.cours).map((i) => `<div class="interruption"><span>Club fermé ${periodeFr(i)}</span>
-              ${admin ? `<button class="lien" data-annuler-coupure="${i.id}">Rétablir</button>` : ''}</div>`).join('')
-              || '<p class="doux">Aucune fermeture prévue.</p>'}
-            ${admin ? (ouvert === 'club' ? formulaireCoupure('club') : '<button class="btn discret" data-ouvrir="club">Ajouter une fermeture</button>') : ''}
-          </div>` : ''}
-
-        ${admin && props.length ? `<h2>Propositions</h2><div class="carte">${props.map((c) => `
-            <div class="bloc-cours"><div><div class="titre">${esc(c.nom)}</div><div class="detail">${rythmeFr(c)}</div></div>
-              <div class="rangee"><button class="btn petit" data-accepter="${c.id}">Accepter</button>
-              <button class="btn discret petit" data-refuser="${c.id}">Refuser</button></div></div>`).join('')}</div>` : ''}
-
-        <h2>${admin ? 'Ajouter un cours' : 'Proposer un cours'}</h2>
-        ${formulaireCours(admin)}
-
-        ${admin
-          ? '<button class="lien" id="voirCle" style="align-self:center">Afficher ma clé de gestion</button>'
-          : '<button class="lien" id="gerer" style="align-self:center">Je gère ce cercle</button>'}
-      </div>`;
-
-    document.getElementById('retour').onclick = async () => { ecran = 'semaine'; ouvert = null; await rafraichir(); };
-    $app.querySelectorAll('[data-habitude]').forEach((b) => b.onchange = () => agir(b, async () => {
-      const id = b.dataset.habitude;
-      if (b.checked) { if (!habitudes.includes(id)) habitudes.push(id); }
-      else {
-        habitudes = habitudes.filter((h) => h !== id);
-        for (const [k, m] of Object.entries(miennes)) if (k.startsWith(id + '|') && m.source === 'habitude') await retirer(k);
-      }
-      ecrire('habitudes', habitudes);
-    }, b.checked ? 'Noté, chaque fois' : 'Habitude retirée', false));
-    $app.querySelectorAll('[data-ouvrir]').forEach((b) => b.onclick = () => { ouvert = b.dataset.ouvrir; afficher(); });
-    const vc = document.getElementById('validerCoupure');
-    if (vc) vc.onclick = () => {
-      const du = document.getElementById('du').value, au = document.getElementById('au').value || du;
-      if (!du) return dire('Indique la date de début');
-      if (au < du) return dire('La fin est avant le début');
-      const cible = vc.dataset.cible;
-      agir(vc, async () => { await api('interrompre', { admin: cercle.admin, cours: cible === 'club' ? null : cible, du, au }); ouvert = null; },
-        cible === 'club' ? 'Fermeture enregistrée' : 'Interruption enregistrée');
-    };
-    const ac = document.getElementById('annulerCoupure'); if (ac) ac.onclick = () => { ouvert = null; afficher(); };
-    $app.querySelectorAll('[data-annuler-coupure]').forEach((b) => b.onclick = () =>
-      agir(b, () => api('annuler_interruption', { admin: cercle.admin, id: b.dataset.annulerCoupure }), 'Séances rétablies'));
-    $app.querySelectorAll('[data-supprimer]').forEach((b) => b.onclick = () => {
-      if (!confirm(`Supprimer ce cours du cercle${NB}? Les inscriptions à venir disparaîtront aussi.`)) return;
-      agir(b, () => api('supprimer_cours', { admin: cercle.admin, cours: b.dataset.supprimer }), 'Cours supprimé');
-    });
-    $app.querySelectorAll('[data-accepter]').forEach((b) => b.onclick = () =>
-      agir(b, () => api('valider', { admin: cercle.admin, cours: b.dataset.accepter, accepte: true }), 'Cours ajouté'));
-    $app.querySelectorAll('[data-refuser]').forEach((b) => b.onclick = () =>
-      agir(b, () => api('valider', { admin: cercle.admin, cours: b.dataset.refuser, accepte: false }), 'Proposition retirée'));
-    brancherFormulaireCours(admin);
-    const vk = document.getElementById('voirCle'); if (vk) vk.onclick = () => { ecran = 'cle'; afficher(); };
-    const ge = document.getElementById('gerer'); if (ge) ge.onclick = () => { ecran = 'gerer'; afficher(); };
+  const r = recos.find(x => x.id === st.id);
+  if (act === 'status' && r) { r.status = b.dataset.s; persist(); renderList(); showDetail(r.id); return; }
+  if (act === 'reshare' && r) return shareReco(r);
+  if (act === 'forward' && r) return showCompose({ artist: r.artist, title: r.title, url: r.url });
+  if (act === 'delete' && r) { if (confirm(t('Supprimer cette reco' + NB + '?'))) { recos = recos.filter(x => x.id !== r.id); persist(); closeSheet(); renderList(); } return; }
+  if (act === 'lang') { lang = b.dataset.l; save('ascolta.lang', lang); renderAll(); showSettings(); return; }
+  if (act === 'export') return exportData();
+  if (act === 'import') return $('sFile').click();
+  if (act === 'wipe') { if (confirm(t('Effacer toutes tes recos' + NB + '? Pense à exporter d’abord.'))) { recos = []; persist(); cals = []; persistCals(); closeSheet(); renderList(); } return; }
+  // Calendrier
+  const c = cals.find(x => x.id === st.id);
+  if (act === 'cstart') return startCal();
+  if (act === 'cday' && c) { const d = +b.dataset.d; return showCompose(c.days[d - 1] || {}, { cal: c.id, day: d }); }
+  if (act === 'cclear' && st.cal) { const k = cals.find(x => x.id === st.cal); k.days[st.day - 1] = null; persistCals(); renderList(); return showCalEdit(k.id); }
+  if (act === 'cedit') return showCalEdit(st.cal || st.id);
+  if (act === 'cshare' && c) return shareCal(c);
+  if (act === 'cdup' && c) return dupCal(c);
+  if (act === 'cpreview' && c) return showCalView(c.id, { preview: true });
+  if (act === 'cdelete' && c) { if (confirm(t('Supprimer ce calendrier' + NB + '?'))) { cals = cals.filter(x => x.id !== c.id); persistCals(); closeSheet(); renderList(); } return; }
+  if (act === 'cremove' && c) { if (confirm(t('Retirer ce calendrier de cet appareil' + NB + '?'))) { cals = cals.filter(x => x.id !== c.id); persistCals(); closeSheet(); renderList(); } return; }
+  if (act === 'copen' && c) return showCalDay(c.id, +b.dataset.d, st.preview);
+  if (act === 'cback' && c) return showCalView(c.id, { preview: st.preview });
+  if (act === 'cadd' && c) {
+    const x = c.days[st.day - 1], rid = c.id + '-' + st.day;
+    if (x && !recos.some(z => z.id === rid)) { recos.push({ id: rid, dir: 'in', status: 'todo', artist: x.artist, title: x.title, note: x.note, url: x.url, from: c.from, date: dayKey(c.year, st.day), savedAt: new Date().toISOString() }); persist(); renderList(); }
+    toast('✓ ' + t('Ajoutée à ta liste')); return showCalDay(c.id, st.day, st.preview);
   }
+});
 
-  function ecranGerer() {
-    $app.innerHTML = `
-      <div class="retour"><button id="retour">‹ Les cours</button></div>
-      <div class="pile">
-        <h2 class="titre-ecran">Je gère ce cercle</h2>
-        <p>Colle ici la <strong>clé de gestion</strong> que tu as reçue en créant le cercle. Tu la retrouves dans ton gestionnaire de mots de passe.</p>
-        <label class="champ">Clé de gestion
-          <input type="text" id="saisieCle" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text"></label>
-        <button class="btn plein" id="valider">Valider</button>
-      </div>`;
-    document.getElementById('retour').onclick = () => { ecran = 'cours'; afficher(); };
-    document.getElementById('valider').onclick = (e) => {
-      const k = document.getElementById('saisieCle').value.trim().toLowerCase();
-      if (!/^[0-9a-f]{32}$/.test(k)) return dire('Cette clé n’a pas le bon format.');
-      agir(e.target, async () => {
-        const r = await api('semaine', null, { admin: k });
-        if (!r.admin) throw new Error('Cette clé ne correspond pas à ce cercle.');
-        cercle.admin = k; ecrire('cercle', cercle); ecran = 'cours';
-      }, 'C’est bon, tu gères ce cercle');
-    };
-  }
+// ============ OUVERTURE D'UN LIEN REÇU ============
+async function handleHash() {
+  const m = location.hash.match(/^#([rc])=([A-Za-z0-9_-]+)$/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  if (m[1] === 'c') return handleCal(m[2]);
+  try { showIncoming(fromPayload(await decodeReco(m[2]))); }
+  catch (e) { toast('⚠️ ' + t('Ce lien de reco est abîmé ou incomplet.')); }
+}
+// Un calendrier reçu est gardé tout de suite : on revient l'ouvrir chaque jour.
+// Reçu une 2e fois (version corrigée par l'autrice) : on remplace les morceaux, on garde les cases déjà ouvertes.
+async function handleCal(code) {
+  let c;
+  try { c = fromCalPayload(await decodeReco(code)); }
+  catch (e) { toast('⚠️ ' + t('Ce lien de calendrier est abîmé ou incomplet.')); return; }
+  const mine = cals.find(x => x.id === c.id);
+  if (mine && mine.dir === 'out') { toast(t('C’est ton calendrier.')); return showCalEdit(mine.id); }
+  if (mine) { Object.assign(mine, { from: c.from, year: c.year, note: c.note, days: c.days }); persistCals(); renderList(); toast('✓ ' + t('Calendrier mis à jour')); return showCalView(mine.id); }
+  Object.assign(c, { dir: 'in', opened: [], savedAt: new Date().toISOString() });
+  cals.push(c); persistCals(); renderList();
+  showCalView(c.id, { welcome: true });
+}
+window.addEventListener('hashchange', handleHash);
 
-  function ecranInviter() {
-    const lien = `${location.origin}${location.pathname}#c=${cercle.c}`;
-    $app.innerHTML = `
-      <div class="retour"><button id="retour">‹ Ma semaine</button></div>
-      <div class="pile">
-        <h2 class="titre-ecran">Inviter quelqu’un</h2>
-        <p>Envoie ce lien à une personne de ton cours. En l’ouvrant, elle rejoint ton cercle${NB}: elle choisit son animal, et c’est tout.</p>
-        <div class="cle">${esc(lien)}</div>
-        <div class="rangee">
-          ${navigator.share ? '<button class="btn plein" id="partager">Partager</button>' : ''}
-          <button class="btn" id="copier">Copier le lien</button>
-        </div>
-        <p class="doux">Pas de numéro de téléphone, pas de groupe${NB}: juste ce lien.</p>
-      </div>`;
-    document.getElementById('retour').onclick = () => { ecran = 'semaine'; afficher(); };
-    document.getElementById('copier').onclick = () => copier(lien, 'Lien copié');
-    const p = document.getElementById('partager');
-    if (p) p.onclick = () => navigator.share({ title: 'Corsia', text: `Rejoins le cercle «${NB}${cercle.nom || 'Corsia'}${NB}» pour voir qui vient au cours`, url: lien }).catch(() => {});
-  }
-
-  /* ================= Actions ================= */
-  async function copier(texte, ok) {
-    try { await navigator.clipboard.writeText(texte); dire(ok); } catch { dire(`Copie impossible${NB}: sélectionne le texte à la main.`); }
-  }
-
-  async function agir(bouton, fn, ok = null, retracer = true) {
-    bouton.disabled = true;
-    try {
-      await fn();
-      if (ok) dire(ok);
-      await rafraichir(retracer);
-    } catch (err) {
-      dire(err.message);
-      await rafraichir(retracer).catch(() => {});
-    } finally {
-      bouton.disabled = false;
-    }
-  }
-
-  async function rafraichir(retracer = true) {
-    if (cercle) {
-      try { await charger(); }
-      catch (err) {
-        if (err.statut === 404 && /Cercle/.test(err.message)) {
-          dire('Ce cercle n’existe plus.'); oublier('cercle'); cercle = null;
-        } else dire(err.message);
-      }
-    }
-    if (retracer) afficher();
-  }
-
-  /* ================= Démarrage ================= */
-  async function demarrer() {
-    const m = location.hash.match(/[#&]c=([0-9a-f]{18})/);
-    if (m) {
-      history.replaceState(null, '', location.pathname);
-      if (!cercle || cercle.c !== m[1]) {
-        if (!cercle || confirm('Rejoindre ce nouveau cercle à la place du tien' + NB + '?')) {
-          cercle = { c: m[1], nom: '' };
-          ecrire('cercle', cercle);
-          habitudes = []; miennes = {}; absences = {};
-          ecrire('habitudes', habitudes); ecrire('miennes', miennes); ecrire('absences', absences);
-        }
-      }
-    }
-    $app.innerHTML = '<div class="vide">Un instant…</div>';
-    await rafraichir();
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && cercle && profil && ecran === 'semaine') rafraichir();
-  });
-
-  demarrer();
-})();
+renderAll();
+handleHash();
 </script>
 </body>
 </html>
