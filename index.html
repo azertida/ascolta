@@ -165,6 +165,9 @@ details.others a{color:#c4b5fd;text-decoration:none;display:block;padding:6px 0}
 .fiche .cal-date{color:#fb923c;font-weight:800;font-size:.85em;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px;padding-right:40px}
 .fiche.day .ttl{padding-right:0}
 
+.nostore{margin:12px 16px 0;max-width:640px;padding:12px 14px;border-radius:12px;border:1px solid #fb923c;background:rgba(251,146,60,.12);color:#fed7aa;font-size:.9em}
+@media (min-width:672px){.nostore{margin:12px auto 0}}
+.nostore strong{display:block;color:#fff;margin-bottom:2px}
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
   background:#8b5cf6;color:#fff;padding:11px 18px;border-radius:24px;font-weight:600;font-size:.92em;
   z-index:100;box-shadow:0 8px 24px rgba(139,92,246,.45);max-width:90vw;text-align:center}
@@ -185,6 +188,7 @@ details.others a{color:#c4b5fd;text-decoration:none;display:block;padding:6px 0}
   <div class="chips" id="chips"></div>
 </div>
 
+<div class="nostore" id="noStore" role="alert" hidden></div>
 <main class="list" id="list"></main>
 
 <button class="fab" id="fab">+</button>
@@ -291,6 +295,9 @@ const EN = {
   'Retirer ce calendrier': 'Remove this calendar',
   ['Retirer ce calendrier de cet appareil' + NB + '?']: 'Remove this calendar from this device?',
   'Case enregistrée': 'Door saved',
+  'Ce navigateur n’enregistre rien': 'This browser saves nothing',
+  'Ce que tu fais ici sera perdu en fermant la page. Ouvre Ascolta dans une fenêtre normale (pas privée) et vérifie que les cookies ne sont pas bloqués pour ce site.': 'What you do here will be lost when you close the page. Open Ascolta in a normal (not private) window and check that cookies aren’t blocked for this site.',
+  'Plus de place pour enregistrer sur cet appareil.': 'No more room to save on this device.',
   'Nouveau calendrier de l’Avent': 'New Advent calendar',
   'Mes calendriers': 'My calendars', 'Calendriers reçus': 'Calendars received',
   'Tu n’as pas encore de calendrier.': 'You have no calendar yet.',
@@ -312,7 +319,23 @@ function t(fr, vars) {
 
 // ============ STOCKAGE (clés préfixées : toutes les applis partagent azertida.github.io) ============
 function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
-function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('⚠️ ' + e.message); } }
+// Le navigateur peut refuser tout enregistrement (cookies bloqués, page ouverte dans un cadre…) :
+// on le détecte une fois et on prévient clairement, au lieu d'un message technique à chaque frappe.
+let storageOK = (() => { try { const k = 'ascolta.__test'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch (e) { return false; } })();
+let fullWarned = false;
+function save(k, v) {
+  if (!storageOK) return;
+  try { localStorage.setItem(k, JSON.stringify(v)); }
+  catch (e) {
+    if (/quota/i.test(e.name + e.message)) { if (!fullWarned) { fullWarned = true; toast('⚠️ ' + t('Plus de place pour enregistrer sur cet appareil.')); } }
+    else { storageOK = false; renderNoStore(); }
+  }
+}
+function renderNoStore() {
+  const el = document.getElementById('noStore'); if (!el) return;
+  el.hidden = storageOK;
+  if (!storageOK) el.innerHTML = `<strong>⚠️ ${esc(t('Ce navigateur n’enregistre rien'))}</strong>${esc(t('Ce que tu fais ici sera perdu en fermant la page. Ouvre Ascolta dans une fenêtre normale (pas privée) et vérifie que les cookies ne sont pas bloqués pour ce site.'))}`;
+}
 let recos = load('ascolta.recos', []);
 if (!Array.isArray(recos)) recos = [];
 let myPlatform = load('ascolta.platform', null);
@@ -518,6 +541,7 @@ function dupCal(src) {
 let filter = 'all';
 const FILTERS = [['all', 'Tout'], ['in', 'Reçues'], ['out', 'Envoyées'], ['todo', 'À écouter'], ['love', 'Coup de cœur']];
 function renderChrome() {
+  renderNoStore();
   document.documentElement.lang = lang;
   $('tagline').textContent = t('La musique qu’on se recommande');
   $('search').placeholder = '🔍 ' + t('Rechercher');
