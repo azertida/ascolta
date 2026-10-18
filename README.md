@@ -12,7 +12,7 @@ Tu partages un morceau (artiste, titre, un petit mot, et le lien de ta plateform
 
 ## Calendrier de l'Avent
 
-Menu ⋯ → « Créer mon calendrier de l'Avent ». On remplit 24 cases (même formulaire qu'une reco), un mot d'accueil, son prénom, puis « Partager le calendrier » : un seul lien (`#c=…`) contient les 24 morceaux.
+Bouton 🎄 en haut de l'écran → « Créer mon calendrier de l'Avent ». Ce bouton rassemble les calendriers créés et reçus ; une pastille orange signale qu'une case attend d'être ouverte. On remplit 24 cases (même formulaire qu'une reco), un mot d'accueil, son prénom, puis « Partager le calendrier » : un seul lien (`#c=…`) contient les 24 morceaux.
 
 - La personne qui l'ouvre garde le calendrier sur son appareil (`ascolta.cals`) et ouvre une case par jour, du 1er au 24 décembre (date locale de l'appareil).
 - Une case ouverte se lit comme une reco : bouton vers sa plateforme, « Ajouter à ma liste ».

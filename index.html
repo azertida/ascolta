@@ -36,6 +36,14 @@ button{cursor:pointer}
   background:radial-gradient(circle,#0f0c29 0 3px,#e2e8f0 3.5px 5px,#1e1b4b 5.5px 100%);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 .head p{font-size:.9em;opacity:.88}
+.cal-btn{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:62px;
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.15);font-size:19px;line-height:1}
+.cal-btn .dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:#fb923c;border:2px solid #7c5cf0;display:none}
+.cal-btn.ping .dot{display:block}
+.hub h3{font-size:.95em;color:#cbd5e1;margin:18px 0 8px}
+.hub .card + .card{margin-top:10px}
+.hub .none{color:#94a3b8;font-size:.9em}
 .menu-btn{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:16px;
   width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);
   background:rgba(255,255,255,.15);color:#fff;font-size:20px;font-weight:700;line-height:1}
@@ -168,6 +176,7 @@ details.others a{color:#c4b5fd;text-decoration:none;display:block;padding:6px 0}
 <header class="head">
   <h1><span class="disc" aria-hidden="true"></span>Ascolta</h1>
   <p id="tagline"></p>
+  <button class="cal-btn" id="calBtn"><span aria-hidden="true">🎄</span><span class="dot"></span></button>
   <button class="menu-btn" id="menuBtn" aria-label="Menu">⋯</button>
 </header>
 
@@ -283,6 +292,10 @@ const EN = {
   ['Retirer ce calendrier de cet appareil' + NB + '?']: 'Remove this calendar from this device?',
   'Case enregistrée': 'Door saved',
   'Nouveau calendrier de l’Avent': 'New Advent calendar',
+  'Mes calendriers': 'My calendars', 'Calendriers reçus': 'Calendars received',
+  'Tu n’as pas encore de calendrier.': 'You have no calendar yet.',
+  'Prépare 24 morceaux pour tes proches : ils en découvriront un par jour, du 1er au 24 décembre.': 'Pick 24 tracks for your loved ones: they’ll discover one a day, from 1 to 24 December.',
+  'Une case t’attend': 'A door is waiting for you',
   'Calendrier pour {who}': 'Calendar for {who}',
   ['Pour qui' + NB + '? (visible par toi seule)']: 'For whom? (only you see this)',
   'Maman, les copines…': 'Mum, the girls…',
@@ -465,6 +478,31 @@ function calGrid(c, mode) { // mode : 'edit' (l'autrice remplit) | 'view' (desti
   }
   return html + '</div>';
 }
+function waiting(c) { // une case ouverte et pas encore regardée dans un calendrier reçu
+  if (c.dir !== 'in') return false;
+  for (let d = 1; d <= DAYS; d++) if (c.days[d - 1] && dayOpen(c, d) && !(c.opened || []).includes(d)) return true;
+  return false;
+}
+function renderCalBtn() {
+  const b = $('calBtn'), ping = cals.some(waiting);
+  b.classList.toggle('ping', ping);
+  b.setAttribute('aria-label', t('Calendrier de l’Avent') + (ping ? ' — ' + t('Une case t’attend') : ''));
+}
+function calCard(c) {
+  return `<button class="card" data-act="chub" data-id="${esc(c.id)}"><span class="sticker cal">🎄${waiting(c) ? ' 🎁' : ''}</span>
+    <div class="title">${esc(calTitle(c))}</div><div class="meta"><span>${esc(calStatus(c))}</span></div></button>`;
+}
+function showCalHub() {
+  const mine = cals.filter(c => c.dir === 'out').sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+  const got = cals.filter(c => c.dir === 'in').sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+  let html = `<h2>🎄 ${esc(t('Calendrier de l’Avent'))}</h2><div class="hub">`;
+  if (!cals.length) html += `<p class="cal-sub">${esc(t('Prépare 24 morceaux pour tes proches : ils en découvriront un par jour, du 1er au 24 décembre.'))}</p>`;
+  if (got.length) html += `<h3>${esc(t('Calendriers reçus'))}</h3>` + got.map(calCard).join('');
+  if (mine.length) html += `<h3>${esc(t('Mes calendriers'))}</h3>` + mine.map(calCard).join('');
+  else if (got.length) html += `<h3>${esc(t('Mes calendriers'))}</h3><p class="none">${esc(t('Tu n’as pas encore de calendrier.'))}</p>`;
+  html += `<div class="actions"><button class="btn primary" data-act="cstart">${esc(t(mine.length ? 'Nouveau calendrier de l’Avent' : 'Créer mon calendrier de l’Avent'))}</button></div></div>`;
+  openSheet(html, { kind: 'calhub' });
+}
 function startCal() {
   const c = { id: newId(), dir: 'out', label: '', from: myName, year: calYear(), note: '', days: Array(DAYS).fill(null), savedAt: new Date().toISOString() };
   cals.push(c); persistCals(); renderList(); showCalEdit(c.id, true);
@@ -494,12 +532,10 @@ function renderList() {
   if (filter === 'todo' || filter === 'love') items = items.filter(r => r.dir === 'in' && r.status === filter);
   if (q) items = items.filter(r => [r.artist, r.title, r.note, r.from].join(' ').toLowerCase().includes(q));
   const list = $('list');
-  let shownCals = filter === 'all' ? cals.slice().sort((a, b) => b.year - a.year || (a.dir === 'out' ? -1 : 1)) : [];
-  if (q) shownCals = shownCals.filter(c => [calTitle(c), c.from, t('Calendrier de l’Avent')].join(' ').toLowerCase().includes(q));
-  if (!recos.length && !cals.length) { list.innerHTML = `<div class="empty"><strong>${esc(t('Aucune reco pour l’instant.'))}</strong>${esc(t('Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.'))}</div>`; return; }
-  if (!items.length && !shownCals.length) { list.innerHTML = `<div class="empty">${esc(t('Aucune reco ne correspond.'))}</div>`; return; }
-  list.innerHTML = shownCals.map(c => `<button class="card" data-cal="${esc(c.id)}"><span class="sticker cal">🎄 ${esc(t('Avent'))}</span>
-      <div class="title">${esc(calTitle(c))}</div><div class="meta"><span>${esc(calStatus(c))}</span></div></button>`).join('') + items.map(r => {
+  renderCalBtn();
+  if (!recos.length) { list.innerHTML = `<div class="empty"><strong>${esc(t('Aucune reco pour l’instant.'))}</strong>${esc(t('Partage un morceau avec le bouton +, ou ouvre un lien qu’on t’a envoyé.'))}</div>`; return; }
+  if (!items.length) { list.innerHTML = `<div class="empty">${esc(t('Aucune reco ne correspond.'))}</div>`; return; }
+  list.innerHTML = items.map(r => {
     const meta = [];
     if (r.dir === 'in') meta.push(esc(t('de {name}', { name: r.from })));
     meta.push(esc(fmtDate(r.date)));
@@ -747,8 +783,6 @@ function showSettings() {
     <h3>${esc(t('Langue'))}</h3><div class="lang"><button class="${lang === 'fr' ? 'on' : ''}" data-act="lang" data-l="fr">Français</button><button class="${lang === 'en' ? 'on' : ''}" data-act="lang" data-l="en">English</button></div>
     <h3><label for="sPlat">${esc(t('Ma plateforme'))}</label></h3><select class="inp" id="sPlat"><option value="">${esc(t('Aucune'))}</option>${PLATFORMS.map(p => `<option value="${p.id}"${myPlatform === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
     <h3><label for="sName">${esc(t('Mon prénom'))}</label></h3><input class="inp" id="sName" maxlength="40" value="${esc(myName)}">
-    <h3>🎄 ${esc(t('Calendrier de l’Avent'))}</h3>
-    <button class="btn ghost" data-act="cstart">${esc(t(cals.some(c => c.dir === 'out') ? 'Nouveau calendrier de l’Avent' : 'Créer mon calendrier de l’Avent'))}</button>
     <h3>${esc(t('Sauvegarde'))}</h3>
     <button class="btn ghost" data-act="export">${esc(t('Exporter mes recos'))}</button>
     <button class="btn ghost" data-act="import">${esc(t('Importer une sauvegarde'))}</button>
@@ -800,12 +834,8 @@ async function importFile(e) {
 // ============ ÉVÉNEMENTS ============
 $('chips').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; filter = b.dataset.f; renderAll(); });
 $('search').addEventListener('input', renderList);
-$('list').addEventListener('click', e => {
-  const card = e.target.closest('.card'); if (!card) return;
-  if (!card.dataset.cal) return showDetail(card.dataset.id);
-  const c = cals.find(x => x.id === card.dataset.cal);
-  if (c) c.dir === 'out' ? showCalEdit(c.id) : showCalView(c.id);
-});
+$('list').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) showDetail(c.dataset.id); });
+$('calBtn').addEventListener('click', showCalHub);
 $('fab').addEventListener('click', () => showCompose());
 $('menuBtn').addEventListener('click', showSettings);
 $('ov').addEventListener('click', e => { if (e.target === $('ov')) closeSheet(); });
@@ -837,6 +867,7 @@ $('sheet').addEventListener('click', async e => {
   // Calendrier
   const c = cals.find(x => x.id === st.id);
   if (act === 'cstart') return startCal();
+  if (act === 'chub') { const k = cals.find(x => x.id === b.dataset.id); if (k) return k.dir === 'out' ? showCalEdit(k.id) : showCalView(k.id); return; }
   if (act === 'cday' && c) { const d = +b.dataset.d; return showCompose(c.days[d - 1] || {}, { cal: c.id, day: d }); }
   if (act === 'cclear' && st.cal) { const k = cals.find(x => x.id === st.cal); k.days[st.day - 1] = null; persistCals(); renderList(); return showCalEdit(k.id); }
   if (act === 'cedit') return showCalEdit(st.cal || st.id);
