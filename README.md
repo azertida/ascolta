@@ -22,4 +22,8 @@ Bouton 🎄 en haut de l'écran → « Créer mon calendrier de l'Avent ». Ce b
 - « Aperçu » montre le calendrier comme les proches le verront. Pour tester un autre jour : `index.html?date=2026-12-05`.
 - Le verrouillage est une politesse, pas un coffre : les 24 morceaux sont dans le lien, quelqu'un de très curieux peut les décoder.
 
-Fichiers : `index.html`, `icon.png` (180×180).
+## Apparence
+
+Même famille visuelle que Corsia : papier crème, encre brune, ocre et bleu profond ; titres en Fraunces, texte en Atkinson Hyperlegible. Les polices sont hébergées dans `polices/` (licence SIL Open Font License, fichiers `LICENCE-*.txt`) : aucun appel à Google ni à un autre service.
+
+Fichiers : `index.html`, `icon.png` (180×180), `polices/` (4 polices + 2 licences).
